@@ -16,39 +16,36 @@
 
 #pragma once
 
+namespace smartlua { namespace Stack
+{
+
 #include <lua.hpp>
 
 #include <type_traits>
 
-namespace smartlua { namespace impl
-{
-
-template<class T, class E=void>
-struct Stack;
-
-template<class T>
-struct Stack<T, typename std::enable_if<std::is_integral<T>::value>::type>
+template<class T, std::enable_if<std::is_floating_point<T>::value>::type>
+struct Stack
 {
 	static void push(lua_State * state, T val)
 	{
-		lua_pushinteger(state, val);
+		lua_pushnumber(state, val);
 	}
 
 	static T get(lua_State * state, int idx)
 	{
-		return lua_tointeger(state, idx);
+		return lua_tonumber(state, idx);
 	}
 
 	static bool is(lua_State * state, int idx)
 	{
-		return lua_isinteger(state, idx);
+		return lua_isnumber(state, idx);
 	}
 
 	static bool safeGet(lua_State * state, T & result, int idx)
 	{
-		if(lua_isinteger(state, idx))
+		if(lua_isnumber(state, idx))
 		{
-			result = lua_tointeger(state, idx);
+			result = lua_tonumber(state, idx);
 			return true;
 		}
 
