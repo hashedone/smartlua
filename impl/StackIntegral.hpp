@@ -16,15 +16,14 @@
 
 #pragma once
 
+#include "Stack.hpp"
+
 #include <lua.hpp>
 
 #include <type_traits>
 
 namespace smartlua { namespace impl
 {
-
-template<class T, class E=void>
-struct Stack;
 
 template<class T>
 struct Stack<T, typename std::enable_if<std::is_integral<T>::value>::type>
@@ -44,15 +43,18 @@ struct Stack<T, typename std::enable_if<std::is_integral<T>::value>::type>
 		return lua_isinteger(state, idx);
 	}
 
-	static bool safeGet(lua_State * state, T & result, int idx)
+	template<typename U=T>
+	static bool safeGet(lua_State * state, U & result, int idx)
 	{
-		if(lua_isinteger(state, idx))
+		if(!lua_isinteger(state, idx))
 		{
-			result = lua_tointeger(state, idx);
-			return true;
+			lua_pushfstring(state, "while getting from stack: expected integral, %s found",
+				lua_typename(state, lua_type(state, idx)));
+			return false;
 		}
 
-		return false;
+		result = lua_tointeger(state, idx);
+		return true;
 	}
 };
 

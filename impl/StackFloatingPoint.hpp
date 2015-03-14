@@ -14,17 +14,19 @@
  * copyrigt Bartłomiej Kuras, 2015
  */
 
-#pragma once
-
-namespace smartlua { namespace Stack
-{
+#include "Stack.hpp"
 
 #include <lua.hpp>
 
 #include <type_traits>
 
-template<class T, std::enable_if<std::is_floating_point<T>::value>::type>
-struct Stack
+#pragma once
+
+namespace smartlua { namespace impl
+{
+
+template<class T>
+struct Stack<T, typename std::enable_if<std::is_floating_point<T>::value>::type>
 {
 	static void push(lua_State * state, T val)
 	{
@@ -41,15 +43,18 @@ struct Stack
 		return lua_isnumber(state, idx);
 	}
 
-	static bool safeGet(lua_State * state, T & result, int idx)
+	template<typename U=T>
+	static bool safeGet(lua_State * state, U & result, int idx)
 	{
-		if(lua_isnumber(state, idx))
+		if(!lua_isnumber(state, idx))
 		{
-			result = lua_tonumber(state, idx);
-			return true;
+			lua_pushfstring(state, "while getting from stack: expected floating point, %s found",
+				lua_typename(state, lua_type(state, idx)));
+			return false;
 		}
 
-		return false;
+		result = lua_tonumber(state, idx);
+		return true;
 	}
 };
 

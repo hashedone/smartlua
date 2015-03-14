@@ -16,8 +16,11 @@
 
 #pragma once
 
-#include <lua.hpp>
 #include "impl/StackIntegral.hpp"
+#include "impl/StackFloatingPoint.hpp"
+#include "impl/StackIterable.hpp"
+
+#include <lua.hpp>
 
 namespace smartlua
 {
