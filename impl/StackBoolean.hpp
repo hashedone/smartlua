@@ -43,7 +43,8 @@ struct Stack<bool>
 		return lua_isboolean(state, idx);
 	}
 
-	static bool safe_get(lua_State * state, bool & result, int idx)
+	template<class U>
+	static bool safe_get(lua_State * state, U & result, int idx)
 	{
 		if(!lua_isboolean(state, idx))
 		{

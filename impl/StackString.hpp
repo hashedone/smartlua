@@ -43,7 +43,8 @@ struct Stack<std::string>
 		return lua_isstring(state, idx);
 	}
 
-	static bool safe_get(lua_State * state, std::string & str, int idx)
+	template<class U>
+	static bool safe_get(lua_State * state, U & str, int idx)
 	{
 		if(!lua_isstring(state, idx))
 		{
@@ -76,7 +77,8 @@ struct Stack<const char *>
 		return lua_isstring(state, idx);
 	}
 
-	static bool safe_get(lua_State * state, const char *& str, int idx)
+	template<class U>
+	static bool safe_get(lua_State * state, U & str, int idx)
 	{
 		if(!lua_isstring(state, idx))
 		{
