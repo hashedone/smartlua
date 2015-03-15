@@ -22,6 +22,7 @@
 #include "impl/StackTuple.hpp"
 #include "impl/StackString.hpp"
 #include "impl/StackBoolean.hpp"
+#include "impl/StackPointer.hpp"
 
 #include <lua.hpp>
 
