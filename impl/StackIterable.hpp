@@ -91,28 +91,44 @@ struct Stack<T, typename std::enable_if<
 		idx = lua_absindex(state, idx);
 		U result;
 		auto it = std::inserter(result, result.end());
-		for(int i=1;; ++i)
+		lua_pushinteger(state, 1);
+		lua_gettable(state, idx);
+		for(int i=2; !lua_isnil(state, -1); ++i)
 		{
-			lua_pushinteger(state, i);
-			lua_gettable(state, idx);
-			if(lua_isnil(state, -1))
-			{
-				lua_pop(state, 1);
-				return result;
-			}
 			it = Stack<typename U::value_type>::get(state, -1);
 			lua_pop(state, 1);
+			lua_pushinteger(state, i);
+			lua_gettable(state, idx);
 		}
+		lua_pop(state, 1);
+		return result;
 	}
 
 	static bool is(lua_State * state, int idx)
 	{
-		return lua_istable(state, idx);
+		if(!lua_istable(state, idx))
+			return false;
+
+		idx = lua_absindex(state, idx);
+		lua_pushinteger(state, 1);
+		lua_gettable(state, idx);
+		for(int i=2; !lua_isnil(state, -1); ++i){
+			if(!Stack<typename T::value_type>::is(state, -1))
+			{
+				lua_pop(state, 1);
+				return false;
+			}
+			lua_pop(state, 1);
+			lua_pushinteger(state, i);
+		}
+		lua_pop(state, 1);
+		return true;
 	}
 
-	template<class U=T, class E=
-			decltype(std::inserter(std::declval<T&>(), std::declval<T&>().end()))>
-	static bool safe_get(lua_State * state, U & result, int idx)
+	template<class U, class E=typename std::enable_if<
+			!std::is_void<decltype(std::inserter(std::declval<T&>(), std::declval<T&>().end()))>::value &&
+			!std::is_same<U, T>::value>::type>
+	static bool safeGet(lua_State * state, U & result, int idx)
 	{
 		if(!lua_istable(state, idx))
 		{
@@ -124,16 +140,10 @@ struct Stack<T, typename std::enable_if<
 		idx = lua_absindex(state, idx);
 		T tmpResult;
 		auto it = std::inserter(tmpResult, tmpResult.end());
-		for(int i=1;; ++i)
+		lua_pushinteger(state, 1);
+		lua_gettable(state, idx);
+		for(int i=2; !lua_isnil(state, -1); ++i)
 		{
-			lua_pushinteger(state, i);
-			lua_gettable(state, idx);
-			if(lua_isnil(state, -1))
-			{
-				lua_pop(state, 1);
-				result = std::move(tmpResult);
-				return true;
-			}
 			if(!Stack<typename T::value_type>::safe_get(state, it, -1))
 			{
 				lua_pushfstring(state, "while getting iterable[%d] from stack: %s",
@@ -144,7 +154,45 @@ struct Stack<T, typename std::enable_if<
 				return false;
 			}
 			lua_pop(state, 1);
+			lua_pushinteger(state, 1);
+			lua_gettable(state, idx);
 		}
+		lua_pop(state, 1);
+		result = std::move(tmpResult);
+		return true;
+	}
+
+	template<class E=decltype(std::inserter(std::declval<T&>(), std::declval<T&>().end()))>
+	static bool safeGet(lua_State * state, T & result, int idx)
+	{
+		if(!lua_istable(state, idx))
+		{
+			lua_pushfstring(state, "while getting from stack: expected iterable, %s found",
+				lua_typename(state, lua_type(state, idx)));
+
+			return false;
+		}
+		idx = lua_absindex(state, idx);
+		auto it = std::inserter(result, result.end());
+		lua_pushinteger(state, 1);
+		lua_gettable(state, idx);
+		for(int i=2; !lua_isnil(state, -1); ++i)
+		{
+			if(!Stack<typename T::value_type>::safe_get(state, it, -1))
+			{
+				lua_pushfstring(state, "while getting iterable[%d] from stack: %s",
+					i,
+					lua_tostring(state, -1));
+				lua_replace(state, -3);
+				lua_pop(state, 1);
+				return false;
+			}
+			lua_pop(state, 1);
+			lua_pushinteger(state, i);
+			lua_gettable(state, idx);
+		}
+		lua_pop(state, 1);
+		return true;
 	}
 };
 

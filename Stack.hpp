@@ -19,6 +19,7 @@
 #include "impl/StackIntegral.hpp"
 #include "impl/StackFloatingPoint.hpp"
 #include "impl/StackIterable.hpp"
+#include "impl/StackTuple.hpp"
 
 #include <lua.hpp>
 
@@ -65,11 +66,11 @@ public:
 	/**
 	 * Gets an element from lua stack
 	 *
-	 * Elements are indexed from the botom of stack starting from 1, but can be indexed with
+	 * Elements are indexed from the bottom of stack starting from 1, but can be indexed with
 	 * negative values, what means indexing from the top of stack. By default the element
 	 * from the top of stack will be returned.
-	 * Returned element is automaticly converted by lua to requested type, if the conversion
-	 * would fail behaviour is defined by lua library - while documenting this code it is
+	 * Returned element is automatically converted by lua to requested type, if the conversion
+	 * would fail behavior is defined by lua library - while documenting this code it is
 	 * long_jump to to lua error handler which ends with application terminate - can be
 	 * changed by lua_atpanic function. It is not recommended to use this function if
 	 * the type on the top of stack is not known for sure
@@ -97,7 +98,7 @@ public:
 	/**
 	 * Gets an element from lua stack if is compatible type
 	 *
-	 * Elements are indexed from the botom of stack starting from 1, but can be indexed with
+	 * Elements are indexed from the bottom of stack starting from 1, but can be indexed with
 	 * negative values, what means indexing from the top of stack. By default the element
 	 * from the top of stack will be returned.
 	 *

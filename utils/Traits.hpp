@@ -18,6 +18,8 @@
 
 #include <type_traits>
 #include <utility>
+#include <tuple>
+#include <array>
 
 namespace smartlua { namespace utils
 {
@@ -26,9 +28,16 @@ template<class T, class E=void>
 struct is_luatable_type: std::false_type { };
 
 template<class T>
-struct is_luatable_type<T, void(
-	decltype(std::declval<T&>().begin()),
-	decltype(std::declval<T&>().end()),
-	typename T::value_type)>: std::true_type { };
+struct is_luatable_type<T, typename std::enable_if<
+	!std::is_void<typename T::value_type>::value &&
+	!std::is_void<decltype(std::declval<T&>().begin())>::value &&
+	!std::is_void<decltype(std::declval<T&>().end())>::value
+>::type>: std::true_type { };
+
+template<class... Args>
+struct is_luatable_type<std::tuple<Args...>>: std::true_type { };
+
+template<class T, int N>
+struct is_luatable_type<std::array<T, N>>: std::true_type { };
 
 } }
