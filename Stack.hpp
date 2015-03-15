@@ -21,6 +21,7 @@
 #include "impl/StackIterable.hpp"
 #include "impl/StackTuple.hpp"
 #include "impl/StackString.hpp"
+#include "impl/StackBoolean.hpp"
 
 #include <lua.hpp>
 
