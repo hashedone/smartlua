@@ -23,6 +23,7 @@
 #include "impl/StackString.hpp"
 #include "impl/StackBoolean.hpp"
 #include "impl/StackPointer.hpp"
+#include "impl/StackTrivial.hpp"
 
 #include <lua.hpp>
 
