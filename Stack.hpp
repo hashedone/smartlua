@@ -20,6 +20,7 @@
 #include "impl/StackFloatingPoint.hpp"
 #include "impl/StackIterable.hpp"
 #include "impl/StackTuple.hpp"
+#include "impl/StackString.hpp"
 
 #include <lua.hpp>
 
