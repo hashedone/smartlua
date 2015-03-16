@@ -18,7 +18,7 @@
 
 #include "Stack.hpp"
 #include "Error.hpp"
-#include "impl/Reference.hpp"
+#include "impl/Function.hpp"
 
 #include <string>
 
@@ -32,66 +32,23 @@ template<class R>
 class Function
 {
 public:
-	Function(impl::Reference && ref_, const std::string & name_ = "__UNKNOWN_FUNCTION__"):
-		ref(ref_),
+	Function(impl::Reference && ref, const std::string & name = "__UNKNOWN_FUNCTION__"):
 		lastError(Error::noError()),
-		name(name_)
-	{
-		auto state = ref_.getState();
-		Stack stack(ref.getState());
-		int pos = stack.size();
+		fnc(std::move(ref), name, lastError)
+	{ }
 
-		if(ref)
-		{
-			ref.push();
-			if(!lua_isfunction(state, -1))
-			{
-				lua_getmetatable(state, -1);
-				lua_pushstring(state, "__call");
-				lua_rawget(state, -2);
-				if(!lua_isfunction(state, -1))
-				{
-					ref.invalidate();
-					lastError = Error::badReference(
-						"function " + name,
-						"function",
-						lua_typename(state, lua_type(state, -3)));
-				}
-			}
-		}
-
-		stack.size(pos);
-	}
-
-	Error error()
-	{
-		std::string result = lastError;
-		result = Error::noError();
-		return result;
-	}
-	operator bool() const { return ref && lastError; }
+	Error error(){ return lastError; }
+	operator bool() const { return fnc; }
 
 	template<class... Args>
 	R operator()(Args... args)
 	{
-		if(!ref)
+		lua_State * state;
+		std::tie(state, lastError) = fnc(1, args...);
+		Stack stack(state);
+		if(!lastError)
 		{
-			lastError = Error::emptyReferenceUsage(
-				"function " + name,
-				"function call");
-			return R();
-		}
-		Stack stack(ref.getState());
-		int pos = stack.size();
-
-		ref.push();
-		pushArgs(args...);
-		if(lua_pcall(ref.getState(), sizeof...(Args), 1, 0))
-		{
-			lastError = Error::runtimeError(
-				"function " + name,
-				stack.get<std::string>());
-			stack.size(pos);
+			stack.size(0);
 			return R();
 		}
 
@@ -99,109 +56,44 @@ public:
 		lastError = stack.safeGet(result);
 		if(!lastError)
 			lastError = Error::stackError(
-				"function " + name,
+				"function " + fnc.getName(),
 				"extracting result",
 				lastError.desc);
 		else
 			lastError = Error::noError();
 
-		stack.size(pos);
+		stack.size(0);
 		return result;
 	}
 
 private:
-	void pushArgs() { }
-
-	template<class Head, class... Tail>
-	void pushArgs(Head head, Tail... tail)
-	{
-		Stack(ref.getState()).push(head);
-		pushArgs(tail...);
-	}
-
-	impl::Reference ref;
 	Error lastError;
-	std::string name;
+	impl::Function fnc;
 };
 
 template<>
 class Function<void>
 {
 public:
-	Function(impl::Reference && ref_, const std::string & name_ = "__UNKNOWN_FUNCTION__"):
-		ref(ref_),
+	Function(impl::Reference && ref, const std::string & name = "__UNKNOWN_FUNCTION__"):
 		lastError(Error::noError()),
-		name(name_)
-	{
-		auto state = ref.getState();
-		Stack stack(ref.getState());
-		int pos = stack.size();
-
-		if(ref)
-		{
-			ref.push();
-			if(!lua_isfunction(state, -1))
-			{
-				lua_getmetatable(state, -1);
-				lua_pushstring(state, "__call");
-				lua_rawget(state, -2);
-				if(!lua_isfunction(state, -1))
-				{
-					ref.invalidate();
-					lastError = Error::badReference(
-						"function " + name,
-						"function",
-						lua_typename(state, lua_type(state, -3)));
-				}
-			}
-		}
-
-		stack.size(pos);
-	}
+		fnc(std::move(ref), name, lastError)
+	{ }
 
 	Error error() const { return lastError; }
-	operator bool() const { return ref && lastError; }
+	operator bool() const { return fnc; }
 
 	template<class... Args>
 	void operator()(Args... args)
 	{
-		if(!ref)
-		{
-			lastError = Error::emptyReferenceUsage(
-				"function " + name,
-				"function call");
-			return;
-		}
-
-		ref.push();
-		pushArgs(args...);
-		if(lua_pcall(ref.getState(), sizeof...(Args), 0, 0))
-		{
-			Stack stack(ref.getState());
-			lastError = Error::runtimeError(
-				"function " + name,
-				stack.get<std::string>());
-			stack.pop(1);
-		}
-		else
-		{
-			lastError = Error::noError();
-		}
+		lua_State * state;
+		std::tie(state, lastError) = fnc(0, args...);
+		Stack(state).size(0);
 	}
 
 private:
-	void pushArgs() { }
-
-	template<class Head, class... Tail>
-	void pushArgs(Head head, Tail... tail)
-	{
-		Stack(ref.getState()).push(head);
-		pushArgs(tail...);
-	}
-
-	impl::Reference ref;
 	Error lastError;
-	std::string name;
+	impl::Function fnc;
 };
 
 }

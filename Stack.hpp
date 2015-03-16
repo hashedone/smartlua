@@ -60,7 +60,7 @@ public:
 	 * Removes elements from top of lua stack
 	 * \param count Number of elements to be removed
 	 */
-	void pop(int count) { lua_pop(state, count); }
+	void pop(int count = 1) { lua_pop(state, count); }
 
 	/**
 	 * Pushes an element to lua stack
