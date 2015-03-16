@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Function.hpp"
+#include "Error.hpp"
 
 #include <boost/format.hpp>
 
@@ -35,12 +36,13 @@ struct ExtractResults
 	static Error get(lua_State * state, Tuple & result, const std::string & name)
 	{
 		smartlua::Stack stack(state);
-		if(!stack.safeGet(std::get<N-1>(result), N))
+		auto e = stack.safeGet(std::get<N-1>(result), N);
+		if(!e)
 		{
 			return Error::stackError(
 				"function " + name,
 				(boost::format("extracting result %1%") % N).str(),
-				stack.get<std::string>());
+				e.desc);
 		}
 
 		return ExtractResults<N-1, Tuple>::get(state, result, name);
@@ -130,14 +132,16 @@ public:
 
 		std::vector<R> result;
 		auto it = std::inserter(result, result.end());
+		lastError = Error::noError();
 		for(int i = 1; i <= stack.size(); ++i)
 		{
-			if(!stack.safeGet(it, i))
+			lastError = stack.safeGet(it, i);
+			if(!lastError)
 			{
 				lastError = Error::stackError(
 					"function " + name,
 					(boost::format("extracting result %1%") % i).str(),
-					stack.get<std::string>());
+					lastError.desc);
 				stack.size(pos);
 				return result;
 			}
@@ -230,11 +234,7 @@ public:
 		}
 
 		std::tuple<Rs...> result;
-		Error e = impl::ExtractResults<sizeof...(Rs), std::tuple<Rs...>>::get(ref.getState(), result, name);
-		if(!e)
-		{
-			lastError = e;
-		}
+		lastError = impl::ExtractResults<sizeof...(Rs), std::tuple<Rs...>>::get(ref.getState(), result, name);
 		stack.size(pos);
 		return result;
 	}

@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Stack.hpp"
+#include "../Error.hpp"
 
 #include <lua.hpp>
 
@@ -44,18 +45,15 @@ struct Stack<T*>
 	}
 
 	template<class U>
-	static bool safe_get(lua_State * state, U & result, int idx)
+	static Error safe_get(lua_State * state, U & result, int idx)
 	{
 		if(!(lua_islightuserdata(state, idx) || lua_isuserdata(state, idx)))
-		{
-			lua_pushfstring(state, "while getting from stack: expected light userdata, %s found",
-				lua_typename(state, lua_type(state, idx)));
-
-			return false;
-		}
+			return Error::stackError(
+				(boost::format("expected pointer, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
 		result = static_cast<T*>(lua_touserdata(state, idx));
-		return true;
+		return Error::noError();
 	}
 };
 

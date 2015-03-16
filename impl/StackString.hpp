@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Stack.hpp"
+#include "../Error.hpp"
 
 #include <lua.hpp>
 
@@ -44,18 +45,15 @@ struct Stack<std::string>
 	}
 
 	template<class U>
-	static bool safe_get(lua_State * state, U & str, int idx)
+	static Error safe_get(lua_State * state, U & str, int idx)
 	{
 		if(!lua_isstring(state, idx))
-		{
-			lua_pushfstring(state, "while getting from stack: expected string, %s found",
-				lua_typename(state, lua_type(state, idx)));
-
-			return false;
-		}
+			return Error::stackError(
+				(boost::format("expected string, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
 		str = lua_tostring(state, idx);
-		return true;
+		return Error::noError();
 	}
 };
 
@@ -78,18 +76,15 @@ struct Stack<const char *>
 	}
 
 	template<class U>
-	static bool safe_get(lua_State * state, U & str, int idx)
+	static Error safe_get(lua_State * state, U & str, int idx)
 	{
 		if(!lua_isstring(state, idx))
-		{
-			lua_pushfstring(state, "while getting from stack: expected cstring, %s found",
-				lua_typename(state, lua_type(state, idx)));
-
-			return false;
-		}
+			return Error::stackError(
+				(boost::format("expected cstring, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
 		str = lua_tostring(state, idx);
-		return true;
+		return Error::noError();
 	}
 };
 

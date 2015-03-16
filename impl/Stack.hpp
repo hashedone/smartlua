@@ -16,7 +16,11 @@
 
 #pragma once
 
+#include "../Error.hpp"
+
 #include  <lua.hpp>
+
+#include <boost/format.hpp>
 
 namespace smartlua { namespace impl
 {
@@ -49,13 +53,12 @@ struct Stack
 	static bool safe_get(lua_State * state, U & result, int idx)
 	{
 		if(!(lua_isuserdata(state, idx) || lua_islightuserdata(state, idx)))
-		{
-			lua_pushfstring(state, "while getting from stack: expected userdata, %s found",
-				lua_typename(state, lua_type(state, idx)));
-			return false;
-		}
+			return Error::stackError(
+				(boost::format("expected userdata, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
 		result = *static_cast<T>(lua_touserdata(state, idx));
+		return Error::noError();
 	}
 
 private:

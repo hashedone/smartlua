@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Stack.hpp"
+#include "../Error.hpp"
 
 #include <lua.hpp>
 
@@ -47,15 +48,12 @@ struct Stack<bool>
 	static bool safe_get(lua_State * state, U & result, int idx)
 	{
 		if(!lua_isboolean(state, idx))
-		{
-			lua_pushfstring(state, "while getting from stack: expected boolean, %s found",
-				lua_typename(state, lua_type(state, idx)));
-
-			return false;
-		}
+			return Error::stackError(
+				(boost::format("expected boolean, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
 		result = lua_toboolean(state, idx);
-		return true;
+		return Error::noError();
 	}
 };
 

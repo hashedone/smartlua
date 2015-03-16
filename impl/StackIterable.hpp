@@ -18,6 +18,7 @@
 
 #include "Stack.hpp"
 #include "../utils/Traits.hpp"
+#include "../Error.hpp"
 
 #include <lua.hpp>
 
@@ -131,12 +132,10 @@ struct Stack<T, typename std::enable_if<
 	static bool safeGet(lua_State * state, U & result, int idx)
 	{
 		if(!lua_istable(state, idx))
-		{
-			lua_pushfstring(state, "while getting from stack: expected iterable, %s found",
-				lua_typename(state, lua_type(state, idx)));
+			return Error::stackError(
+				(boost::format("expected iterable, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
-			return false;
-		}
 		idx = lua_absindex(state, idx);
 		T tmpResult;
 		auto it = std::inserter(tmpResult, tmpResult.end());
@@ -144,14 +143,14 @@ struct Stack<T, typename std::enable_if<
 		lua_gettable(state, idx);
 		for(int i=2; !lua_isnil(state, -1); ++i)
 		{
-			if(!Stack<typename T::value_type>::safe_get(state, it, -1))
+			auto e = Stack<typename T::value_type>::safe_get(state, it, -1);
+			if(!e)
 			{
-				lua_pushfstring(state, "while getting iterable[%d] from stack: %s",
-					i,
-					lua_tostring(state, -1));
-				lua_replace(state, -3);
+				e = Error::stackError(
+					(boost::format("iterable[%1%]") % (i - 1)).str(),
+					e.desc);
 				lua_pop(state, 1);
-				return false;
+				return e;
 			}
 			lua_pop(state, 1);
 			lua_pushinteger(state, 1);
@@ -166,33 +165,31 @@ struct Stack<T, typename std::enable_if<
 	static bool safeGet(lua_State * state, T & result, int idx)
 	{
 		if(!lua_istable(state, idx))
-		{
-			lua_pushfstring(state, "while getting from stack: expected iterable, %s found",
-				lua_typename(state, lua_type(state, idx)));
+			return Error::stackError(
+				(boost::format("expected iterable, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
-			return false;
-		}
 		idx = lua_absindex(state, idx);
 		auto it = std::inserter(result, result.end());
 		lua_pushinteger(state, 1);
 		lua_gettable(state, idx);
 		for(int i=2; !lua_isnil(state, -1); ++i)
 		{
-			if(!Stack<typename T::value_type>::safe_get(state, it, -1))
+			auto e = Stack<typename T::value_type>::safe_get(state, it, -1);
+			if(!e)
 			{
-				lua_pushfstring(state, "while getting iterable[%d] from stack: %s",
-					i,
-					lua_tostring(state, -1));
-				lua_replace(state, -3);
+				e = Error::stackError(
+					(boost::format("iterable[%1%]") % (i - 1)).str(),
+					e.desc);
 				lua_pop(state, 1);
-				return false;
+				return e;
 			}
 			lua_pop(state, 1);
 			lua_pushinteger(state, i);
 			lua_gettable(state, idx);
 		}
 		lua_pop(state, 1);
-		return true;
+		return Error::noError();
 	}
 };
 

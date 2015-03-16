@@ -16,6 +16,7 @@
 
 #include "Stack.hpp"
 #include "../utils/Traits.hpp"
+#include "../Error.hpp"
 
 #include <lua.hpp>
 
@@ -64,18 +65,18 @@ struct StackTupleHelper
 		return StackTupleHelper<N-1, Tuple>::is(state, idx);
 	}
 
-	static bool safeGet(lua_State * state, Tuple & t, int idx)
+	static Error safeGet(lua_State * state, Tuple & t, int idx)
 	{
 		lua_pushinteger(state, N);
 		lua_gettable(state, idx);
-		if(!Stack<typename std::tuple_element<N-1, Tuple>::tuple_element>::safe_get(state, std::get<N-1>(t), idx))
+		auto e = Stack<typename std::tuple_element<N-1, Tuple>::tuple_element>::safe_get(state, std::get<N-1>(t), idx);
+		if(!e)
 		{
-			lua_pushfstring(state, "while getting tuple[%d]: %s",
-				N,
-				lua_tostring(state, -1));
-			lua_replace(state, -3);
+			return Error::stackError(
+				(boost::format("tuple[%1%]") % N).str(),
+				e.desc);
 			lua_pop(state, 1);
-			return false;
+			return e;
 		}
 		lua_pop(state, 1);
 
@@ -118,32 +119,27 @@ struct Stack<std::tuple<Args...>>
 	}
 
 	template<class U>
-	static bool safe_get(lua_State * state, U & result, int idx)
+	static Error safe_get(lua_State * state, U & result, int idx)
 	{
 		if(!lua_istable(state, idx))
-		{
-			lua_pushfstring(state, "while getting from stack: expected tuple, %s found",
-				lua_typename(state, lua_type(state, idx)));
+			return Error::stackError(
+				(boost::format("expected tuple, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
-			return false;
-		}
 		std::tuple<Args...> tmpResult;
-		bool status = StackTupleHelper<sizeof...(Args), std::tuple<Args...>>::safeGet(state, tmpResult, lua_absindex(state, idx));
+		auto e = StackTupleHelper<sizeof...(Args), std::tuple<Args...>>::safeGet(state, tmpResult, lua_absindex(state, idx));
 		result = std::move(tmpResult);
-		return status;
+		return e;
 	}
 
 	static bool safe_get(lua_State * state, std::tuple<Args...> & result, int idx)
 	{
 		if(!lua_istable(state, idx))
-		{
-			lua_pushfstring(state, "while getting from stack: expected tuple, %s found",
-				lua_typename(state, lua_type(state, idx)));
+			return Error::stackError(
+				(boost::format("expected tuple, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
-			return false;
-		}
-		bool status = StackTupleHelper<sizeof...(Args), std::tuple<Args...>>::safeGet(state, result, lua_absindex(state, idx));
-		return status;
+		return StackTupleHelper<sizeof...(Args), std::tuple<Args...>>::safeGet(state, result, lua_absindex(state, idx));
 	}
 };
 
@@ -175,29 +171,24 @@ struct Stack<std::array<T, N>>
 	static bool safe_get(lua_State * state, U & result, int idx)
 	{
 		if(!lua_istable(state, idx))
-		{
-			lua_pushfstring(state, "while getting from stack: expected tuple, %s found",
-				lua_typename(state, lua_type(state, idx)));
+			return Error::stackError(
+				(boost::format("expected array, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
-			return false;
-		}
 		std::array<T, N> tmpResult;
-		bool status = StackTupleHelper<N, std::array<T, N>>::safeGet(state, tmpResult, lua_absindex(state, idx));
+		auto e = StackTupleHelper<N, std::array<T, N>>::safeGet(state, tmpResult, lua_absindex(state, idx));
 		result = std::move(tmpResult);
-		return status;
+		return e;
 	}
 
 	static bool safe_get(lua_State * state, std::array<T, N> & result, int idx)
 	{
 		if(!lua_istable(state, idx))
-		{
-			lua_pushfstring(state, "while getting from stack: expected tuple, %s found",
-				lua_typename(state, lua_type(state, idx)));
+			return Error::stackError(
+				(boost::format("expected array, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
-			return false;
-		}
-		bool status = StackTupleHelper<N, std::array<T, N>>::safeGet(state, result, lua_absindex(state, idx));
-		return status;
+		return StackTupleHelper<N, std::array<T, N>>::safeGet(state, result, lua_absindex(state, idx));;
 	}
 };
 

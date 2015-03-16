@@ -123,7 +123,7 @@ public:
 	 * \return True if element of lua stack is compatible with given type, false otherwise
 	 */
 	template<class T>
-	bool safeGet(T & result, int idx = -1) { return impl::Stack<T>::safeGet(state, result, idx); }
+	Error safeGet(T & result, int idx = -1) { return impl::Stack<T>::safeGet(state, result, idx); }
 
 	/**
 	 * Gets an element from lua stack if is compatible type
@@ -137,7 +137,7 @@ public:
 	 * \return True if element of lua stack is compatible with given type, false otherwise
 	 */
 	template<class T>
-	bool safeGet(std::insert_iterator<T> & result, int idx = -1)
+	Error safeGet(std::insert_iterator<T> & result, int idx = -1)
 	{
 		return impl::Stack<typename T::value_type>::safeGet(state, result, idx);
 	}

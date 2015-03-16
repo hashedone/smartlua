@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Stack.hpp"
+#include "../Error.hpp"
 
 #include <lua.hpp>
 
@@ -44,17 +45,15 @@ struct Stack<T, typename std::enable_if<std::is_integral<T>::value>::type>
 	}
 
 	template<typename U=T>
-	static bool safeGet(lua_State * state, U & result, int idx)
+	static Error safeGet(lua_State * state, U & result, int idx)
 	{
 		if(!lua_isinteger(state, idx))
-		{
-			lua_pushfstring(state, "while getting from stack: expected integral, %s found",
-				lua_typename(state, lua_type(state, idx)));
-			return false;
-		}
+			return Error::stackError(
+				(boost::format("expected integral, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
 		result = lua_tointeger(state, idx);
-		return true;
+		return Error::noError();
 	}
 };
 

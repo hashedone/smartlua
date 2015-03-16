@@ -96,13 +96,14 @@ public:
 		}
 
 		R result;
-		if(!stack.safeGet(result))
-		{
+		lastError = stack.safeGet(result);
+		if(!lastError)
 			lastError = Error::stackError(
 				"function " + name,
 				"extracting result",
-				stack.get<std::string>());
-		}
+				lastError.desc);
+		else
+			lastError = Error::noError();
 
 		stack.size(pos);
 		return result;
@@ -181,6 +182,10 @@ public:
 				"function " + name,
 				stack.get<std::string>());
 			stack.pop(1);
+		}
+		else
+		{
+			lastError = Error::noError();
 		}
 	}
 

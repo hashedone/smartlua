@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include "Stack.hpp"
+#include "../Error.hpp"
+
 #include  <lua.hpp>
 
 #include <type_traits>
@@ -44,17 +47,15 @@ struct Stack<T, typename std::enable_if<std::is_trivially_destructible<T>::value
 	}
 
 	template<class U=T>
-	static bool safe_get(lua_State * state, U & result, int idx)
+	static Error safe_get(lua_State * state, U & result, int idx)
 	{
 		if(!(lua_isuserdata(state, idx) || lua_islightuserdata(state, idx)))
-		{
-			lua_pushfstring(state, "while getting from stack: expected userdata, %s found",
-				lua_typename(state, lua_type(state, idx)));
-			return false;
-		}
+			return Error::stackError(
+				(boost::format("expected pod, %1% found")
+				% lua_typename(state, lua_type(state, idx))).str());
 
 		result = *static_cast<T>(lua_touserdata(state, idx));
-		return true;
+		return Error::noError();
 	}
 };
 
