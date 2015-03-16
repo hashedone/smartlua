@@ -32,9 +32,6 @@ struct Stack
 		lua_pushstring(state, "__gc");
 		lua_pushcclosure(state, &Stack<T>::gc, 0);
 		lua_settable(state, -3);
-		lua_pushstring(state, "size");
-		lua_pushinteger(state, sizeof(T));
-		lua_settable(state, -3);
 		lua_setmetatable(state, -2);
 	}
 
@@ -45,50 +42,19 @@ struct Stack
 
 	static bool is(lua_State * state, int idx)
 	{
-		if(!lua_isuserdata(state, idx))
-			return false;
-
-		lua_getmetatable(state, idx);
-		lua_pushstring(state, "size");
-		lua_gettable(state, -1);
-		if(!lua_isinteger(state, -1))
-		{
-			lua_pop(state, 2);
-			return false;
-		}
-		int size = lua_tointeger(state, -1);
-		lua_pop(state, 2);
-		return size == sizeof(T);
+		return lua_isuserdata(state, idx) || lua_islightuserdata(state, idx);
 	}
 
 	template<class U=T>
 	static bool safe_get(lua_State * state, U & result, int idx)
 	{
-		if(!lua_isuserdata(state, idx))
+		if(!(lua_isuserdata(state, idx) || lua_islightuserdata(state, idx)))
 		{
 			lua_pushfstring(state, "while getting from stack: expected userdata, %s found",
 				lua_typename(state, lua_type(state, idx)));
 			return false;
 		}
 
-		lua_getmetatable(state, idx);
-		lua_pushstring(state, "size");
-		lua_gettable(state, -1);
-		if(!lua_isinteger(state, -1))
-		{
-			lua_pushfstring(state, "while getting from stack: size of userdata unknown",
-				lua_typename(state, lua_type(state, idx)));
-			lua_pop(state, 2);
-			return false;
-		}
-		if(sizeof(T) != lua_tointeger(state, -1))
-		{
-			lua_pop(state, 2);
-			lua_pushfstring(state, "while getting from stack: size of userdata doesn't correspond to requested type",
-				lua_typename(state, lua_type(state, idx)));
-			return false;
-		}
-		lua_pop(state, 2);
 		result = *static_cast<T>(lua_touserdata(state, idx));
 	}
 
