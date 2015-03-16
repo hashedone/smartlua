@@ -62,7 +62,7 @@ private:
 	static int gc(lua_State * state)
 	{
 		T * ptr = lua_touserdata(state, -1);
-		delete T;
+		delete ptr;
 		return 0;
 	}
 };

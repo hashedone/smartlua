@@ -36,6 +36,8 @@ namespace smartlua
 class Stack
 {
 public:
+	Stack() = delete;
+
 	Stack(lua_State * state_):
 		state(state_)
 	{ }

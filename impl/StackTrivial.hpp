@@ -25,7 +25,7 @@ namespace smartlua { namespace impl
 {
 
 template<class T>
-struct Stack<T, typename std::enable_if<std::is_trivially_destructible<T>::value>::type>
+struct Stack<T, typename std::enable_if<std::is_trivially_destructible<T>::value && !std::is_fundamental<T>::value>::type>
 {
 	static void push(lua_State * state, const T & val)
 	{
