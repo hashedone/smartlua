@@ -18,11 +18,42 @@
 
 #include "Function.hpp"
 
-#include <vector>
 #include <boost/format.hpp>
+
+#include <vector>
+#include <tuple>
 
 namespace smartlua
 {
+
+namespace impl
+{
+
+template<int N, class Tuple>
+struct ExtractResults
+{
+	static Error get(lua_State * state, Tuple & result, const std::string & name)
+	{
+		smartlua::Stack stack(state);
+		if(!stack.safeGet(std::get<N-1>(result), N))
+		{
+			return Error::stackError(
+				"function " + name,
+				(boost::format("extracting result %1%") % N).str(),
+				stack.get<std::string>());
+		}
+
+		return ExtractResults<N-1, Tuple>::get(state, result, name);
+	}
+};
+
+template<class Tuple>
+struct ExtractResults<0, Tuple>
+{
+	static Error get(lua_State *, Tuple &, const std::string &) { return Error::noError(); }
+};
+
+}
 
 template<class... Rs>
 struct MultiReturn { };
@@ -81,7 +112,7 @@ public:
 			lastError = Error::emptyReferenceUsage(
 				"function " + name,
 				"function call");
-			return R();
+			return std::vector<R>();
 		}
 		Stack stack(ref.getState());
 		int pos = stack.size();
@@ -94,7 +125,7 @@ public:
 				"function " + name,
 				stack.get<std::string>());
 			stack.size(pos);
-			return R();
+			return std::vector<R>();
 		}
 
 		std::vector<R> result;
@@ -105,14 +136,105 @@ public:
 			{
 				lastError = Error::stackError(
 					"function " + name,
-					"extracting result",
-					// (boost::format("extracting result %1%") % i).str(),
+					(boost::format("extracting result %1%") % i).str(),
 					stack.get<std::string>());
 				stack.size(pos);
 				return result;
 			}
 		}
 
+		stack.size(pos);
+		return result;
+	}
+
+private:
+	void pushArgs() { }
+
+	template<class Head, class... Tail>
+	void pushArgs(Head head, Tail... tail)
+	{
+		Stack(ref.getState()).push(head);
+		pushArgs(tail...);
+	}
+
+	impl::Reference ref;
+	Error lastError;
+	std::string name;
+};
+
+template<class... Rs>
+class Function<MultiReturn<Rs...>>
+{
+public:
+	Function(impl::Reference && ref_, const std::string & name_ = "__UNKNOWN_FUNCTION__"):
+		ref(ref_),
+		lastError(Error::noError()),
+		name(name_)
+	{
+		auto state = ref_.getState();
+		Stack stack(ref.getState());
+		int pos = stack.size();
+
+		if(ref)
+		{
+			ref.push();
+			if(!lua_isfunction(state, -1))
+			{
+				lua_getmetatable(state, -1);
+				lua_pushstring(state, "__call");
+				lua_rawget(state, -2);
+				if(!lua_isfunction(state, -1))
+				{
+					ref.invalidate();
+					lastError = Error::badReference(
+						"function " + name,
+						"function",
+						lua_typename(state, lua_type(state, -3)));
+				}
+			}
+		}
+
+		stack.size(pos);
+	}
+
+	Error error()
+	{
+		std::string result = lastError;
+		result = Error::noError();
+		return result;
+	}
+	operator bool() const { return ref && lastError; }
+
+	template<class... Args>
+	std::tuple<Rs...> operator()(Args... args)
+	{
+		if(!ref)
+		{
+			lastError = Error::emptyReferenceUsage(
+				"function " + name,
+				"function call");
+			return std::tuple<Rs...>();
+		}
+		Stack stack(ref.getState());
+		int pos = stack.size();
+
+		ref.push();
+		pushArgs(args...);
+		if(lua_pcall(ref.getState(), sizeof...(Args), LUA_MULTRET, 0))
+		{
+			lastError = Error::runtimeError(
+				"function " + name,
+				stack.get<std::string>());
+			stack.size(pos);
+			return std::tuple<Rs...>();
+		}
+
+		std::tuple<Rs...> result;
+		Error e = impl::ExtractResults<sizeof...(Rs), std::tuple<Rs...>>::get(ref.getState(), result, name);
+		if(!e)
+		{
+			lastError = e;
+		}
 		stack.size(pos);
 		return result;
 	}
