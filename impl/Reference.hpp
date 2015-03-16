@@ -18,7 +18,7 @@
 
 #include <lua.hpp>
 
-namespace smartlua
+namespace smartlua { namespace impl
 {
 
 /**
@@ -111,4 +111,4 @@ private:
 	int ref;
 };
 
-}
+} }
