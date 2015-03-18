@@ -20,7 +20,9 @@
 #include "../Error.hpp"
 #include "../utils/Traits.hpp"
 
-#include  <lua.hpp>
+#ifndef SMARTLUA_USER_LUA_INCLUDE
+#include <lua.hpp>
+#endif
 
 #include <type_traits>
 #include <cstdlib>

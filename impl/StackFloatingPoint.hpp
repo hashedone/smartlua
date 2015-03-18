@@ -17,7 +17,9 @@
 #include "Stack.hpp"
 #include "../Error.hpp"
 
+#ifndef SMARTLUA_USER_LUA_INCLUDE
 #include <lua.hpp>
+#endif
 
 #include <type_traits>
 

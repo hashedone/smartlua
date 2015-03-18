@@ -18,6 +18,7 @@
 
 #include "Error.hpp"
 #include "Stack.hpp"
+#include "impl/CallStack.hpp"
 #include "utils/AtScopeExit.hpp"
 
 #ifndef SMARTLUA_USER_LUA_INCLUDE
@@ -51,11 +52,13 @@ class Lua
 public:
 	Lua():
 		state(luaL_newstate(), lua_close)
-	{ }
+	{
+		impl::CallStack(state.get()).setCurrentState(state.get());
+	}
 
 	template<int N>
 	explicit Lua(std::array<lib, N> const & libs):
-		state(luaL_newstate(), lua_close)
+		Lua()
 	{
 		for(auto & l: libs)
 		{
@@ -106,7 +109,7 @@ public:
 	}
 
 	explicit Lua(std::initializer_list<lib> const & libs):
-		state(luaL_newstate(), lua_close)
+		Lua()
 	{
 		for(auto & l: libs)
 		{

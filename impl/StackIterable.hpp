@@ -21,7 +21,9 @@
 #include "../utils/AtScopeExit.hpp"
 #include "../Error.hpp"
 
+#ifndef SMARTLUA_USER_LUA_INCLUDE
 #include <lua.hpp>
+#endif
 
 #include <type_traits>
 #include <iterator>

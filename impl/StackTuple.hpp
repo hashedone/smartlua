@@ -18,7 +18,9 @@
 #include "../utils/Traits.hpp"
 #include "../Error.hpp"
 
+#ifndef SMARTLUA_USER_LUA_INCLUDE
 #include <lua.hpp>
+#endif
 
 #include <tuple>
 #include <array>

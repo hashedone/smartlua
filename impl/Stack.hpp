@@ -18,7 +18,9 @@
 
 #include "../Error.hpp"
 
-#include  <lua.hpp>
+#ifndef SMARTLUA_USER_LUA_INCLUDE
+#include <lua.hpp>
+#endif
 
 #include <boost/format.hpp>
 
