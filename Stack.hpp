@@ -76,7 +76,7 @@ public:
 	template<class... Args>
 	void push(const char * frmt, Args... args)
 	{
-		lua_pushfstring(frmt, args...);
+		lua_pushfstring(state, frmt, args...);
 	}
 
 	/**

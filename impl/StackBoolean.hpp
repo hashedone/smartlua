@@ -45,7 +45,7 @@ struct Stack<bool>
 	}
 
 	template<class U>
-	static bool safe_get(lua_State * state, U & result, int idx)
+	static bool safeGet(lua_State * state, U & result, int idx)
 	{
 		if(!lua_isboolean(state, idx))
 			return Error::stackError(

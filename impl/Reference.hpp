@@ -18,6 +18,8 @@
 
 #include <lua.hpp>
 
+#include <string>
+
 namespace smartlua { namespace impl
 {
 
@@ -30,7 +32,7 @@ class Reference
 public:
 	Reference() = delete;
 
-	Reference(lua_State * state_):
+	explicit Reference(lua_State * state_):
 		Reference(state_, LUA_NOREF)
 	{ }
 
@@ -60,10 +62,7 @@ public:
 	Reference & operator =(const Reference & other)
 	{
 		luaL_unref(state, LUA_REGISTRYINDEX, ref);
-		state = other.state;
-		lua_rawgeti(state, LUA_REGISTRYINDEX, other.ref);
-		ref = luaL_ref(state, LUA_REGISTRYINDEX);
-		lua_pop(state, 1);
+		*this = other.clone();
 		return *this;
 	}
 
@@ -74,12 +73,17 @@ public:
 		return *this;
 	}
 
-	lua_State * getState() { return state; }
+	lua_State * getState() const { return state; }
 	const lua_State * getState() const { return state; }
 
-	void push()
+	void push() const
 	{
 		lua_rawgeti(state, LUA_REGISTRYINDEX, ref);
+	}
+
+	void push(lua_State * state_) const
+	{
+		lua_rawgeti(state_, LUA_REGISTRYINDEX, ref);
 	}
 
 	operator bool() const
@@ -93,9 +97,18 @@ public:
 		ref = LUA_NOREF;
 	}
 
-	static Reference createFromStack(lua_State * state)
+	Reference clone() const
 	{
+		push();
 		return Reference(state, luaL_ref(state, LUA_REGISTRYINDEX));
+	}
+
+	static Reference createFromStack(lua_State * state, int idx = -1)
+	{
+		lua_pushvalue(state, idx);
+		auto result = Reference(state, luaL_ref(state, LUA_REGISTRYINDEX));
+		lua_pop(state, 1);
+		return result;
 	}
 
 	static Reference createFromGlobal(lua_State * state, const std::string & name)

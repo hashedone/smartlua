@@ -41,13 +41,13 @@ struct Stack<std::string>
 
 	static bool is(lua_State * state, int idx)
 	{
-		return lua_isstring(state, idx);
+		return lua_isstring(state, idx) && !lua_isnumber(state, idx);
 	}
 
 	template<class U>
-	static Error safe_get(lua_State * state, U & str, int idx)
+	static Error safeGet(lua_State * state, U & str, int idx)
 	{
-		if(!lua_isstring(state, idx))
+		if(!lua_isstring(state, idx) || lua_isnumber(state, idx))
 			return Error::stackError(
 				(boost::format("expected string, %1% found")
 				% lua_typename(state, lua_type(state, idx))).str());
@@ -72,13 +72,13 @@ struct Stack<const char *>
 
 	static bool is(lua_State * state, int idx)
 	{
-		return lua_isstring(state, idx);
+		return lua_isstring(state, idx) && !lua_isnumber(state, idx);
 	}
 
 	template<class U>
-	static Error safe_get(lua_State * state, U & str, int idx)
+	static Error safeGet(lua_State * state, U & str, int idx)
 	{
-		if(!lua_isstring(state, idx))
+		if(!lua_isstring(state, idx) || lua_isnumber(state, idx))
 			return Error::stackError(
 				(boost::format("expected cstring, %1% found")
 				% lua_typename(state, lua_type(state, idx))).str());

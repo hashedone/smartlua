@@ -18,6 +18,7 @@
 
 #include "Stack.hpp"
 #include "../Error.hpp"
+#include "../utils/Traits.hpp"
 
 #include  <lua.hpp>
 
@@ -28,7 +29,12 @@ namespace smartlua { namespace impl
 {
 
 template<class T>
-struct Stack<T, typename std::enable_if<std::is_trivially_destructible<T>::value && !std::is_fundamental<T>::value>::type>
+struct Stack<T,
+	typename std::enable_if<
+		std::is_trivially_destructible<T>::value &&
+		!std::is_fundamental<T>::value &&
+		!std::is_pointer<T>::value &&
+		!utils::is_luatable_type<T>::value>::type>
 {
 	static void push(lua_State * state, const T & val)
 	{
@@ -47,7 +53,7 @@ struct Stack<T, typename std::enable_if<std::is_trivially_destructible<T>::value
 	}
 
 	template<class U=T>
-	static Error safe_get(lua_State * state, U & result, int idx)
+	static Error safeGet(lua_State * state, U & result, int idx)
 	{
 		if(!(lua_isuserdata(state, idx) || lua_islightuserdata(state, idx)))
 			return Error::stackError(

@@ -34,7 +34,7 @@ struct Stack<T*>
 		lua_pushlightuserdata(state, static_cast<void*>(val));
 	}
 
-	static bool get(lua_State * state, int idx)
+	static T * get(lua_State * state, int idx)
 	{
 		return static_cast<T*>(lua_touserdata(state, idx));
 	}
@@ -45,7 +45,7 @@ struct Stack<T*>
 	}
 
 	template<class U>
-	static Error safe_get(lua_State * state, U & result, int idx)
+	static Error safeGet(lua_State * state, U & result, int idx)
 	{
 		if(!(lua_islightuserdata(state, idx) || lua_isuserdata(state, idx)))
 			return Error::stackError(

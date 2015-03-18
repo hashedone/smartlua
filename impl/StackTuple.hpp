@@ -30,12 +30,12 @@ template<int N, class Tuple>
 struct StackTupleHelper
 {
 	static constexpr int tableTypes = StackTupleHelper<N-1, Tuple>::tableTypes +
-		(utils::is_luatable_type<typename std::tuple_element<N-1, Tuple>::tuple_element>::value ? 1 : 0);
+		(utils::is_luatable_type<typename std::tuple_element<N-1, Tuple>::type>::value ? 1 : 0);
 
 	static void push(lua_State * state, const Tuple & t)
 	{
 		lua_pushinteger(state, N);
-		Stack<typename std::tuple_element<N-1, Tuple>::tuple_element>::push(state, std::get<N-1>(t));
+		Stack<typename std::tuple_element<N-1, Tuple>::type>::push(state, std::get<N-1>(t));
 		lua_settable(state, -3);
 
 		StackTupleHelper<N-1, Tuple>::push(state, t);
@@ -45,7 +45,7 @@ struct StackTupleHelper
 	{
 		lua_pushinteger(state, N);
 		lua_gettable(state, idx);
-		std::get<N-1>(t) = Stack<typename std::tuple_element<N-1, Tuple>::tuple_element>::get(state, -1);
+		std::get<N-1>(t) = Stack<typename std::tuple_element<N-1, Tuple>::type>::get(state, -1);
 		lua_pop(state, 1);
 
 		StackTupleHelper<N-1, Tuple>::get(state, t, idx);
@@ -55,7 +55,7 @@ struct StackTupleHelper
 	{
 		lua_pushinteger(state, N);
 		lua_gettable(state, idx);
-		if(!Stack<typename std::tuple_element<N-1, Tuple>::tuple_element>::is(state, -1))
+		if(!Stack<typename std::tuple_element<N-1, Tuple>::type>::is(state, -1))
 		{
 			lua_pop(state, 1);
 			return false;
@@ -69,7 +69,7 @@ struct StackTupleHelper
 	{
 		lua_pushinteger(state, N);
 		lua_gettable(state, idx);
-		auto e = Stack<typename std::tuple_element<N-1, Tuple>::tuple_element>::safe_get(state, std::get<N-1>(t), idx);
+		auto e = Stack<typename std::tuple_element<N-1, Tuple>::type>::safe_get(state, std::get<N-1>(t), idx);
 		if(!e)
 		{
 			return Error::stackError(
@@ -119,7 +119,7 @@ struct Stack<std::tuple<Args...>>
 	}
 
 	template<class U>
-	static Error safe_get(lua_State * state, U & result, int idx)
+	static Error safeGet(lua_State * state, U & result, int idx)
 	{
 		if(!lua_istable(state, idx))
 			return Error::stackError(
@@ -132,7 +132,7 @@ struct Stack<std::tuple<Args...>>
 		return e;
 	}
 
-	static bool safe_get(lua_State * state, std::tuple<Args...> & result, int idx)
+	static Error safeGet(lua_State * state, std::tuple<Args...> & result, int idx)
 	{
 		if(!lua_istable(state, idx))
 			return Error::stackError(
@@ -168,7 +168,7 @@ struct Stack<std::array<T, N>>
 	}
 
 	template<class U>
-	static bool safe_get(lua_State * state, U & result, int idx)
+	static Error safeGet(lua_State * state, U & result, int idx)
 	{
 		if(!lua_istable(state, idx))
 			return Error::stackError(
@@ -181,7 +181,7 @@ struct Stack<std::array<T, N>>
 		return e;
 	}
 
-	static bool safe_get(lua_State * state, std::array<T, N> & result, int idx)
+	static Error safeGet(lua_State * state, std::array<T, N> & result, int idx)
 	{
 		if(!lua_istable(state, idx))
 			return Error::stackError(

@@ -50,7 +50,7 @@ struct Stack
 	}
 
 	template<class U=T>
-	static bool safe_get(lua_State * state, U & result, int idx)
+	static bool safeGet(lua_State * state, U & result, int idx)
 	{
 		if(!(lua_isuserdata(state, idx) || lua_islightuserdata(state, idx)))
 			return Error::stackError(
