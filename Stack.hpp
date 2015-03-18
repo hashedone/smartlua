@@ -24,6 +24,7 @@
 #include "impl/StackBoolean.hpp"
 #include "impl/StackPointer.hpp"
 #include "impl/StackTrivial.hpp"
+#include "impl/StackValue.hpp"
 
 #include <lua.hpp>
 
@@ -95,7 +96,7 @@ public:
 	 * \return Indexed element from lua stack
 	 */
 	template<class T>
-	T get(int idx = -1) { return impl::Stack<T>::get(state, idx); }
+	T get(int idx = -1) const { return impl::Stack<T>::get(state, idx); }
 
 	/**
 	 * Checks is an element on lua stack is comatible with given type
@@ -109,7 +110,7 @@ public:
 	 * \return True if element of lua stack is compatible with given type, false otherwise
 	 */
 	template<class T>
-	bool is(int idx = -1) { return impl::Stack<T>::is(state, idx); }
+	bool is(int idx = -1) const { return impl::Stack<T>::is(state, idx); }
 
 	/**
 	 * Gets an element from lua stack if is compatible type
@@ -123,7 +124,7 @@ public:
 	 * \return True if element of lua stack is compatible with given type, false otherwise
 	 */
 	template<class T>
-	std::tuple<T, Error> safeGet(int idx = -1) { return impl::Stack<T>::safeGet(state, idx); }
+	std::tuple<T, Error> safeGet(int idx = -1) const { return impl::Stack<T>::safeGet(state, idx); }
 
 private:
 	lua_State * state;

@@ -22,7 +22,7 @@
 
 using namespace smartlua;
 
-TEST(VariablesTest, GettingStandardTypes)
+TEST(VariablesTest, Getting)
 {
 	Lua sut;
 
@@ -46,6 +46,10 @@ TEST(VariablesTest, GettingStandardTypes)
 
 	sut.script("x = { 1, \"test\" }");
 	EXPECT_EQ((std::make_tuple(1, std::string("test"))), (sut.global<std::tuple<int, std::string>>("x")));
+
+	sut.script("x = 5");
+	Value v = sut.global<Value>("x");
+	EXPECT_EQ(5, v.get<int>());
 }
 
 TEST(VariablesTest, SafelyGetting)

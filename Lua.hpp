@@ -200,7 +200,7 @@ public:
 	}
 
 	template<class T>
-	T global(std::string const & name)
+	T global(std::string const & name) const
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name.c_str());
@@ -208,7 +208,7 @@ public:
 	}
 
 	template<class T>
-	T global(char const * name)
+	T global(char const * name) const
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name);
@@ -216,7 +216,7 @@ public:
 	}
 
 	template<class T>
-	T isGlobalTypeOf(std::string const & name)
+	T isGlobalTypeOf(std::string const & name) const
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name.c_str());
@@ -224,7 +224,7 @@ public:
 	}
 
 	template<class T>
-	T isGlobalTypeOf(char const * name)
+	T isGlobalTypeOf(char const * name) const
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name);

@@ -16,7 +16,9 @@
 
 #pragma once
 
+#ifndef SMARTLUA_USER_LUA_INCLUDE
 #include <lua.hpp>
+#endif
 
 #include <string>
 
@@ -74,7 +76,6 @@ public:
 	}
 
 	lua_State * getState() const { return state; }
-	const lua_State * getState() const { return state; }
 
 	void push() const
 	{

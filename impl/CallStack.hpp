@@ -40,7 +40,7 @@ public:
 	{
 		lua_pushstring(state, "smartlua_currentThread");
 		lua_rawget(state, LUA_REGISTRYINDEX);
-		lua_State result = lua_tothread(state, -1);
+		lua_State * result = lua_tothread(state, -1);
 		lua_pop(state, 1);
 		return result;
 	}
