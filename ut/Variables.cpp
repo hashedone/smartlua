@@ -54,9 +54,11 @@ TEST(VariablesTest, SafelyGetting)
 
 	sut.script("x = 5");
 	std::string str;
-	EXPECT_EQ(Error::Code::STACK_ERROR, sut.safeGetGlobal("x", str).code);
+	EXPECT_EQ(Error::Code::BadType, std::get<1>(sut.safeGetGlobal("x", str)).code);
 	int i;
-	EXPECT_EQ(Error::Code::OK, sut.safeGetGlobal("x", i).code);
+	Error e;
+	std::tie(i, e) = sut.safeGetGlobal("x", i);
+	EXPECT_EQ(Error::Code::OK, e.code);
 	EXPECT_EQ(5, i);
 }
 

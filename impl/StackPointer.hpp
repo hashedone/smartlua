@@ -44,16 +44,16 @@ struct Stack<T*>
 		return lua_islightuserdata(state, idx) || lua_isuserdata(state, idx);
 	}
 
-	template<class U>
-	static Error safeGet(lua_State * state, U & result, int idx)
+	static std::tuple<T*, Error> safeGet(lua_State * state, int idx)
 	{
 		if(!(lua_islightuserdata(state, idx) || lua_isuserdata(state, idx)))
-			return Error::stackError(
-				(boost::format("expected pointer, %1% found")
-				% lua_typename(state, lua_type(state, idx))).str());
+			return std::make_tuple(
+				nullptr,
+				Error::badType("pointer", lua_typename(state, lua_type(state, idx))));
 
-		result = static_cast<T*>(lua_touserdata(state, idx));
-		return Error::noError();
+		return std::make_tuple(
+			static_cast<T*>(lua_touserdata(state, idx)),
+			Error::noError());
 	}
 };
 

@@ -44,16 +44,16 @@ struct Stack<T, typename std::enable_if<std::is_floating_point<T>::value>::type>
 		return lua_isnumber(state, idx);
 	}
 
-	template<typename U=T>
-	static Error safeGet(lua_State * state, U & result, int idx)
+	static std::tuple<T, Error> safeGet(lua_State * state, int idx)
 	{
 		if(!lua_isnumber(state, idx))
-			return Error::stackError(
-				(boost::format("expected floating point, %1% found")
-				% lua_typename(state, lua_type(state, idx))).str());
+			return std::make_tuple(
+				0.,
+				Error::badType("floating point", lua_typename(state, lua_type(state, idx))));
 
-		result = lua_tonumber(state, idx);
-		return Error::noError();
+		return std::make_tuple(
+			lua_tonumber(state, idx),
+			Error::noError());
 	}
 };
 

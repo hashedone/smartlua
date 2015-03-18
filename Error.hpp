@@ -29,7 +29,7 @@ struct Error
 		BAD_REFERENCE_TYPE,
 		EMPTY_REFERENCE_USAGE,
 		RUNTIME_ERROR,
-		STACK_ERROR
+		BadType
 	} code;
 
 	std::string desc;
@@ -69,17 +69,9 @@ struct Error
 		return Error { Code::RUNTIME_ERROR, prefix + ": runtime error (" + error + ")" };
 	}
 
-	static Error stackError(const std::string & error)
+	static Error badType(std::string const & expected, std::string const & found)
 	{
-		return Error { Code::STACK_ERROR, "stack error (" + error + ")" };
-	}
-	static Error stackError(const std::string & prefix, const std::string & error)
-	{
-		return Error { Code::STACK_ERROR, prefix + ": stack error (" + error + ")" };
-	}
-	static Error stackError(const std::string & prefix, const std::string & when, const std::string & error)
-	{
-		return Error { Code::STACK_ERROR, prefix + ": stack error while " + when + " (" + error + ")" };
+		return { Code::BadType, "bad type: expected " + expected + ", " + found + " found" };
 	}
 };
 

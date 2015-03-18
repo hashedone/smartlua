@@ -52,16 +52,16 @@ struct Stack<T,
 		return lua_isuserdata(state, idx) || lua_islightuserdata(state, idx);
 	}
 
-	template<class U=T>
-	static Error safeGet(lua_State * state, U & result, int idx)
+	static std::tuple<T, Error> safeGet(lua_State * state, int idx)
 	{
 		if(!(lua_isuserdata(state, idx) || lua_islightuserdata(state, idx)))
-			return Error::stackError(
-				(boost::format("expected pod, %1% found")
-				% lua_typename(state, lua_type(state, idx))).str());
+			return std::make_pair(
+				T(),
+				Error::badType("pod", lua_typename(state, lua_type(state, idx))));
 
-		result = *static_cast<T>(lua_touserdata(state, idx));
-		return Error::noError();
+		return std::make_tuple(
+			*static_cast<T>(lua_touserdata(state, idx)),
+			Error::noError());
 	}
 };
 

@@ -22,6 +22,8 @@
 
 #include <boost/format.hpp>
 
+#include <tuple>
+
 namespace smartlua { namespace impl
 {
 
@@ -49,16 +51,16 @@ struct Stack
 		return lua_isuserdata(state, idx) || lua_islightuserdata(state, idx);
 	}
 
-	template<class U=T>
-	static bool safeGet(lua_State * state, U & result, int idx)
+	static std::tuple<T, Error> safeGet(lua_State * state, int idx)
 	{
 		if(!(lua_isuserdata(state, idx) || lua_islightuserdata(state, idx)))
-			return Error::stackError(
-				(boost::format("expected userdata, %1% found")
-				% lua_typename(state, lua_type(state, idx))).str());
+			return std::make_tuple(
+				T(),
+				Error::badType("userdata", lua_typename(state, lua_type(state, idx))));
 
-		result = *static_cast<T>(lua_touserdata(state, idx));
-		return Error::noError();
+		return std::make_tuple(
+			*static_cast<T*>(lua_touserdata(state, idx)),
+			Error::noError());
 	}
 
 private:

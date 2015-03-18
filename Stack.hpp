@@ -123,24 +123,7 @@ public:
 	 * \return True if element of lua stack is compatible with given type, false otherwise
 	 */
 	template<class T>
-	Error safeGet(T & result, int idx = -1) { return impl::Stack<T>::safeGet(state, result, idx); }
-
-	/**
-	 * Gets an element from lua stack if is compatible type
-	 *
-	 * Elements are indexed from the bottom of stack starting from 1, but can be indexed with
-	 * negative values, what means indexing from the top of stack. By default the element
-	 * from the top of stack will be returned.
-	 *
-	 * \param result[out] Insert iterator to put extracted result
-	 * \param idx Index of element to be returned
-	 * \return True if element of lua stack is compatible with given type, false otherwise
-	 */
-	template<class T>
-	Error safeGet(std::insert_iterator<T> & result, int idx = -1)
-	{
-		return impl::Stack<typename T::value_type>::safeGet(state, result, idx);
-	}
+	std::tuple<T, Error> safeGet(int idx = -1) { return impl::Stack<T>::safeGet(state, idx); }
 
 private:
 	lua_State * state;

@@ -44,16 +44,16 @@ struct Stack<bool>
 		return lua_isboolean(state, idx);
 	}
 
-	template<class U>
-	static bool safeGet(lua_State * state, U & result, int idx)
+	static std::tuple<bool, Error> safeGet(lua_State * state, int idx)
 	{
 		if(!lua_isboolean(state, idx))
-			return Error::stackError(
-				(boost::format("expected boolean, %1% found")
-				% lua_typename(state, lua_type(state, idx))).str());
+			return std::make_tuple(
+				false,
+				Error::badType("boolean", lua_typename(state, lua_type(state, idx))));
 
-		result = lua_toboolean(state, idx);
-		return Error::noError();
+		return std::make_tuple(
+			lua_toboolean(state, idx),
+			Error::noError());
 	}
 };
 

@@ -44,16 +44,18 @@ struct Stack<std::string>
 		return lua_isstring(state, idx) && !lua_isnumber(state, idx);
 	}
 
-	template<class U>
-	static Error safeGet(lua_State * state, U & str, int idx)
+	static std::tuple<std::string, Error> safeGet(lua_State * state, int idx)
 	{
 		if(!lua_isstring(state, idx) || lua_isnumber(state, idx))
-			return Error::stackError(
-				(boost::format("expected string, %1% found")
-				% lua_typename(state, lua_type(state, idx))).str());
+		{
+			return std::make_tuple(
+				"",
+				Error::badType("string", lua_typename(state, lua_type(state, idx))));
+		}
 
-		str = lua_tostring(state, idx);
-		return Error::noError();
+		return std::make_tuple(
+				lua_tostring(state, idx),
+			Error::noError());
 	}
 };
 
@@ -75,16 +77,16 @@ struct Stack<const char *>
 		return lua_isstring(state, idx) && !lua_isnumber(state, idx);
 	}
 
-	template<class U>
-	static Error safeGet(lua_State * state, U & str, int idx)
+	static std::tuple<const char *, Error> safeGet(lua_State * state, int idx)
 	{
 		if(!lua_isstring(state, idx) || lua_isnumber(state, idx))
-			return Error::stackError(
-				(boost::format("expected cstring, %1% found")
-				% lua_typename(state, lua_type(state, idx))).str());
+			return std::make_tuple(
+				"",
+				Error::badType("cstring", lua_typename(state, lua_type(state, idx))));
 
-		str = lua_tostring(state, idx);
-		return Error::noError();
+		return std::make_tuple(
+			lua_tostring(state, idx),
+			Error::noError());
 	}
 };
 

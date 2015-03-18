@@ -229,19 +229,19 @@ public:
 	}
 
 	template<class T>
-	Error safeGetGlobal(std::string const & name, T & result)
+	std::tuple<T, Error> safeGetGlobal(std::string const & name)
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name.c_str());
-		return Stack(state.get()).safeGet(result);
+		return Stack(state.get()).safeGet<T>();
 	}
 
 	template<class T>
-	Error safeGetGlobal(char const * name, T & result)
+	std::tuple<T, Error> safeGetGlobal(char const * name, T & result)
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name);
-		return Stack(state.get()).safeGet(result);
+		return Stack(state.get()).safeGet<T>();
 	}
 
 	template<class T>

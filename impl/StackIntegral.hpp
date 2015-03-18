@@ -44,16 +44,16 @@ struct Stack<T, typename std::enable_if<std::is_integral<T>::value>::type>
 		return lua_isinteger(state, idx);
 	}
 
-	template<typename U=T>
-	static Error safeGet(lua_State * state, U & result, int idx)
+	static std::tuple<T, Error> safeGet(lua_State * state, int idx)
 	{
 		if(!lua_isinteger(state, idx))
-			return Error::stackError(
-				(boost::format("expected integral, %1% found")
-				% lua_typename(state, lua_type(state, idx))).str());
+			return std::make_tuple(
+				0,
+				Error::badType("integral", lua_typename(state, lua_type(state, idx))));
 
-		result = lua_tointeger(state, idx);
-		return Error::noError();
+		return std::make_tuple(
+			lua_tointeger(state, idx),
+			Error::noError());
 	}
 };
 
