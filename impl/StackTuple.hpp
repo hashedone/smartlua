@@ -161,6 +161,18 @@ struct Stack<std::array<T, N>>
 
 	static bool is(lua_State * state, int idx)
 	{
+		const int top = lua_gettop(state);
+		const int aidx = lua_absindex(state, idx);
+		AtScopeExit(lua_settop(state, top));
+
+		if(!lua_istable(state, aidx))
+		{
+			lua_getmetatable(state, aidx);
+			lua_pushstring(state, "__index");
+			lua_rawget(state, -2);
+			if(!lua_isfunction(state, -1))
+				return false;
+		}
 		return StackTupleHelper<N, std::array<T, N>>::is(state, lua_absindex(state, idx));
 	}
 

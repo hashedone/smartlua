@@ -27,7 +27,7 @@
 namespace smartlua
 {
 
-namespace impl
+/*namespace impl
 {
 
 template<int N, class Tuple>
@@ -58,12 +58,12 @@ struct ExtractResults<0, Tuple>
 }
 
 template<class... Rs>
-struct MultiReturn { };
+struct MultiReturn { };*/
 
 /**
  * Function returning any number of arguments with the same type
  */
-template<class R>
+/*template<class R>
 class Function<MultiReturn<R>>
 {
 public:
@@ -145,6 +145,6 @@ public:
 private:
 	Error lastError;
 	impl::Function fnc;
-};
+};*/
 
 }

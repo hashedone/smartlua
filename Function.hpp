@@ -19,28 +19,40 @@
 #include "Stack.hpp"
 #include "Error.hpp"
 #include "impl/Function.hpp"
+#include "impl/CallStack.hpp"
 
 #include <string>
 
 namespace smartlua
 {
 
-/**
- * Callable lua function
- */
-template<class R>
 class Function
 {
 public:
 	Function(impl::Reference && ref, const std::string & name = "__UNKNOWN_FUNCTION__"):
-		lastError(Error::noError()),
-		fnc(std::move(ref), name, lastError)
+		fnc(std::move(ref), name)
 	{ }
 
-	Error error(){ return lastError; }
+	void push(lua_State * state) const { fnc.getReference().push(state); }
+
 	operator bool() const { return fnc; }
 
 	template<class... Args>
+	Error call(Args... args)
+	{
+		// Creating new stack frame
+		impl::CallStack callStack(fnc.getReference().getState());
+		lua_State * const parentThread = callStack.getCurrentState();
+		lua_State * thread = lua_newthread(parentThread);
+		callStack.pushState(thread);
+		AtScopeExit(
+			callStack.popState(),
+			lua_pop(parentThread, 1));
+
+		return fnc(thread, 0, args...);
+	}
+
+	/*template<class R, class... Args>
 	R operator()(Args... args)
 	{
 		lua_State * state;
@@ -64,14 +76,14 @@ public:
 
 		stack.size(0);
 		return result;
-	}
+	}*/
 
 private:
-	Error lastError;
+
 	impl::Function fnc;
 };
 
-template<>
+/*template<>
 class Function<void>
 {
 public:
@@ -94,6 +106,6 @@ public:
 private:
 	Error lastError;
 	impl::Function fnc;
-};
+};*/
 
 }

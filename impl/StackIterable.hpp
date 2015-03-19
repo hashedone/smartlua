@@ -88,7 +88,8 @@ struct Stack<T, typename std::enable_if<
 		if(!lua_istable(state, aidx))
 		{
 			lua_getmetatable(state, aidx);
-			lua_getfield(state, -1, "__index");
+			lua_pushstring(state, "__index");
+			lua_rawget(state, -2);
 			if(!lua_isfunction(state, -1))
 				return false;
 		}
@@ -115,7 +116,8 @@ struct Stack<T, typename std::enable_if<
 		if(!lua_istable(state, aidx))
 		{
 			lua_getmetatable(state, aidx);
-			lua_getfield(state, -1, "__index");
+			lua_pushstring(state, "__index");
+			lua_rawget(state, -2);
 			if(!lua_isfunction(state, -1))
 				return std::make_tuple(
 					T(),

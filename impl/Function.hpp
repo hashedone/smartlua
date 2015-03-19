@@ -18,6 +18,7 @@
 
 #include "../Stack.hpp"
 #include "../Error.hpp"
+#include "../utils/AtScopeExit.hpp"
 #include "Reference.hpp"
 
 #include <string>
@@ -29,82 +30,70 @@ namespace smartlua { namespace impl
 class Function
 {
 public:
-	Function(impl::Reference && ref_, const std::string & name_, Error & error):
+	Function(Reference && ref_, const std::string & name_):
 		ref(ref_),
 		name(name_)
 	{
-		error = Error::noError();
-
 		auto state = ref_.getState();
 		smartlua::Stack stack(ref.getState());
-		int pos = stack.size();
+		const int top = stack.size();
+		AtScopeExit(stack.size(top));
 
 		if(ref)
 		{
-			ref.push();
+			ref.push(state);
 			if(!lua_isfunction(state, -1))
 			{
 				lua_getmetatable(state, -1);
 				lua_pushstring(state, "__call");
 				lua_rawget(state, -2);
 				if(!lua_isfunction(state, -1))
-				{
 					ref.invalidate();
-					error = Error::badReference(
-						"function " + name,
-						"function",
-						lua_typename(state, lua_type(state, -3)));
-				}
 			}
 		}
-
-		stack.size(pos);
 	}
 
-	operator bool() const { return ref; }
-	const std::string getName() { return name; }
+	operator bool() const const { return ref; }
+	std::string getName() const { return name; }
+	Reference & getReference() { return ref; }
+	Reference const & getReference() const { return ref; }
 
 	template<class... Args>
-	std::tuple<lua_State *, Error> operator()(int retc, Args... args)
+	Error operator()(lua_State * thread, int retc, Args... args) const
 	{
 		if(!ref)
 		{
-			return
-			std::make_tuple(
-				ref.getState(),
-				Error::emptyReferenceUsage(
+			return Error::emptyReferenceUsage(
 					"function " + name,
-					"function call")
-			);
+					"function call");
 		}
 
-		smartlua::Stack stack(ref.getState());
-		ref.push();
+		smartlua::Stack stack(thread);
+		stack.push(ref);
 
-		pushArgs(args...);
+		pushArgs(thread, args...);
 		if(lua_pcall(ref.getState(), sizeof...(Args), retc, 0))
 		{
-			auto e = Error::runtimeError(
-				"function " + name,
-				stack.get<std::string>());
-			stack.pop();
-			return std::make_tuple(ref.getState(), e);
+			AtScopeExit(stack.size(0));
+			return Error::runtimeError(
+					"function " + name,
+					stack.get<std::string>());
 		}
 
-		return std::make_tuple(ref.getState(), Error::noError());
+		return Error::noError();
 	}
 
 private:
-	void pushArgs() { }
+	void pushArgs(lua_State *) const { }
 
 	template<class Head, class... Tail>
-	void pushArgs(Head head, Tail... tail)
+	void pushArgs(lua_State * thread, Head head, Tail... tail) const
 	{
-		smartlua::Stack(ref.getState()).push(head);
+		smartlua::Stack(thread).push(head);
 		pushArgs(tail...);
 	}
 
-	impl::Reference ref;
+	Reference ref;
 	std::string name;
 };
 

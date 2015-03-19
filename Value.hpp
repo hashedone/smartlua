@@ -32,13 +32,13 @@ public:
 		ref(ref_)
 	{ }
 
-	void push(lua_State * state) const { ref.push(); }
+	void push(lua_State * state) const { ref.push(state); }
 
 	template<class T>
 	T get() const
 	{
 		AtScopeExit(lua_pop(ref.getState(), 1));
-		ref.push();
+		ref.push(ref.getState());
 		return impl::Stack<T>::get(ref.getState(), -1);
 	}
 
@@ -46,7 +46,7 @@ public:
 	T isTypeOf() const
 	{
 		AtScopeExit(lua_pop(ref.getState(), 1));
-		ref.push();
+		ref.push(ref.getState());
 		return impl::Stack<T>::is(ref.getState(), -1);
 	}
 
@@ -54,7 +54,7 @@ public:
 	std::tuple<T, Error> safeGet() const
 	{
 		AtScopeExit(lua_pop(ref.getState(), 1));
-		ref.push();
+		ref.push(ref.getState());
 		return impl::Stack<T>::safeGet(ref.getState(), -1);
 	}
 

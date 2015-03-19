@@ -77,11 +77,6 @@ public:
 
 	lua_State * getState() const { return state; }
 
-	void push() const
-	{
-		lua_rawgeti(state, LUA_REGISTRYINDEX, ref);
-	}
-
 	void push(lua_State * state_) const
 	{
 		lua_rawgeti(state_, LUA_REGISTRYINDEX, ref);
@@ -100,7 +95,7 @@ public:
 
 	Reference clone() const
 	{
-		push();
+		push(state);
 		return Reference(state, luaL_ref(state, LUA_REGISTRYINDEX));
 	}
 
