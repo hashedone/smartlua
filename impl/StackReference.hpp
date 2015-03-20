@@ -37,7 +37,7 @@ struct Stack<Reference>
 		ref.push(state);
 	}
 
-	static Value get(lua_State * state, int idx)
+	static Reference get(lua_State * state, int idx)
 	{
 		return Reference::createFromStack(state, idx);
 	}
@@ -47,7 +47,7 @@ struct Stack<Reference>
 		return true;
 	}
 
-	static std::tuple<Value, Error> safeGet(lua_State * state, int idx)
+	static std::tuple<Reference, Error> safeGet(lua_State * state, int idx)
 	{
 		return std::make_tuple(Reference::createFromStack(state, idx), Error::noError());
 	}

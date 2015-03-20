@@ -42,11 +42,11 @@ public:
 	{
 		// Creating new stack frame
 		impl::CallStack callStack(fnc.getReference().getState());
-		lua_State * const parentThread = callStack.getCurrentState();
+		lua_State * parentThread = callStack.getCurrentState();
 		lua_State * thread = lua_newthread(parentThread);
-		callStack.pushState(thread);
+		callStack.setCurrentState(thread);
 		AtScopeExit(
-			callStack.popState(),
+			callStack.setCurrentState(parentThread),
 			lua_pop(parentThread, 1));
 
 		return fnc(thread, 0, args...);

@@ -45,7 +45,7 @@ struct Stack<smartlua::Function>
 	static bool is(lua_State * state, int idx)
 	{
 		const int top = lua_gettop(state);
-		AtScopeExit(lua_settop(state, idx));
+		AtScopeExit(lua_settop(state, top));
 
 		if(!lua_isfunction(state, idx))
 		{
@@ -61,7 +61,7 @@ struct Stack<smartlua::Function>
 	static std::tuple<smartlua::Function, Error> safeGet(lua_State * state, int idx)
 	{
 		const int top = lua_gettop(state);
-		AtScopeExit(lua_settop(state, idx));
+		AtScopeExit(lua_settop(state, top));
 
 		if(!lua_isfunction(state, idx))
 		{
@@ -73,7 +73,7 @@ struct Stack<smartlua::Function>
 				Error::badType("function", lua_typename(state, lua_type(state, idx))));
 		}
 
-		return std::make_tuple(Function(Reference::createFromStack(state, idx)), Error::noError());
+		return std::make_tuple(smartlua::Function(std::move(Reference::createFromStack(state, idx))), Error::noError());
 	}
 };
 

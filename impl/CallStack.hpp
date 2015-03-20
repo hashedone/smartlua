@@ -20,6 +20,8 @@
 #include <lua.hpp>
 #endif
 
+#include "../utils/AtScopeExit.hpp"
+
 namespace smartlua { namespace impl
 {
 
@@ -40,27 +42,8 @@ public:
 	{
 		lua_pushstring(state, "smartlua_currentThread");
 		lua_rawget(state, LUA_REGISTRYINDEX);
-		lua_State * result = lua_tothread(state, -1);
-		lua_pop(state, 1);
-		return result;
-	}
-
-	void pushState(lua_State * newState)
-	{
-		lua_State * previousState = getCurrentState();
-		lua_pushlightuserdata(newState, newState);
-		lua_pushlightuserdata(newState, previousState);
-		lua_rawset(newState, LUA_REGISTRYINDEX);
-		setCurrentState(newState);
-	}
-
-	void popState()
-	{
-		lua_State * previousState = getCurrentState();
-		lua_pushstring(state, "smartlua_currentThread");
-		lua_pushlightuserdata(previousState, previousState);
-		lua_rawget(previousState, LUA_REGISTRYINDEX);
-		lua_rawset(previousState, LUA_REGISTRYINDEX);
+		AtScopeExit(lua_pop(state, 1));
+		return lua_tothread(state, -1);
 	}
 
 private:

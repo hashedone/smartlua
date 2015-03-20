@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "../Stack.hpp"
+#include "StackReference.hpp"
 #include "../Error.hpp"
 #include "../utils/AtScopeExit.hpp"
 #include "Reference.hpp"
@@ -35,9 +35,8 @@ public:
 		name(name_)
 	{
 		auto state = ref_.getState();
-		smartlua::Stack stack(ref.getState());
-		const int top = stack.size();
-		AtScopeExit(stack.size(top));
+		const int top = lua_gettop(state);
+		AtScopeExit(lua_settop(state, top));
 
 		if(ref)
 		{
@@ -53,7 +52,7 @@ public:
 		}
 	}
 
-	operator bool() const const { return ref; }
+	operator bool() const { return ref; }
 	std::string getName() const { return name; }
 	Reference & getReference() { return ref; }
 	Reference const & getReference() const { return ref; }
@@ -68,16 +67,16 @@ public:
 					"function call");
 		}
 
-		smartlua::Stack stack(thread);
-		stack.push(ref);
+		ref.push(thread);
 
 		pushArgs(thread, args...);
-		if(lua_pcall(ref.getState(), sizeof...(Args), retc, 0))
+		int p = lua_pcall(thread, sizeof...(Args), retc, 0);
+		if(p)
 		{
-			AtScopeExit(stack.size(0));
+			AtScopeExit(lua_settop(thread, 0));
 			return Error::runtimeError(
 					"function " + name,
-					stack.get<std::string>());
+					lua_tostring(thread, -1));
 		}
 
 		return Error::noError();
@@ -89,8 +88,8 @@ private:
 	template<class Head, class... Tail>
 	void pushArgs(lua_State * thread, Head head, Tail... tail) const
 	{
-		smartlua::Stack(thread).push(head);
-		pushArgs(tail...);
+		Stack<Head>::push(thread, head);
+		pushArgs(thread, tail...);
 	}
 
 	Reference ref;

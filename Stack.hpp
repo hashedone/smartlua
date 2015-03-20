@@ -25,6 +25,8 @@
 #include "impl/StackPointer.hpp"
 #include "impl/StackTrivial.hpp"
 #include "impl/StackValue.hpp"
+#include "impl/StackReference.hpp"
+#include "impl/StackFunction.hpp"
 
 #include <lua.hpp>
 
