@@ -104,10 +104,35 @@ struct StackGetter<std::function<void(Args...)>>
 			return std::make_tuple([](Args...){ }, std::get<Error>(result));
 		}
 		auto f = std::get<smartlua::Function>(result);
-		return [f](Args... args) { return f.call(args...); };
+		return [f](Args... args) { f.call(args...); };
 	}
 };
 
+template<class R, class... Args>
+struct StackGetter<std::function<void(Args...)>>
+{
+	static std::function<typename FunctionTraits<R>::ReturnType(Args...)> get(lua_State * state, int idx)
+	{
+		auto f = Stack::get<smartlua::Function>(state, idx);
+		return [f](Args... args) { return std::get<0>(f.call(args...)); };
+	}
+
+	static bool is(lua_State * state, int idx)
+	{
+		return Stack::is<smartlua::Function>(state, idx);
+	}
+
+	static std::tuple<std::function<typename FunctionTraits<R>::ReturnType(Args...)>, Error> safeGet(lua_State * state, int idx)
+	{
+		auto result = Stack::safeGet<smartlua::Function>(state, idx);
+		if(!std::get<Error>(result))
+		{
+			return std::make_tuple([](Args...){ typename FunctionTraits<R>::ReturnType(); }, std::get<Error>(result));
+		}
+		auto f = std::get<smartlua::Function>(result);
+		return [f](Args... args) { return std::get<0>(f.call(args...)); };
+	}
+};
 
 } }
 
