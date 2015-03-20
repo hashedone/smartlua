@@ -31,15 +31,8 @@
 namespace smartlua { namespace impl
 {
 
-template<class T, class E=void>
-struct is_iterable: std::false_type { };
-
 template<class T>
-struct is_iterable<T,
-	typename std::enable_if<std::is_pointer<decltype(&T::begin)>::value>::type>: std::true_type { };
-
-template<class T>
-struct Stack<T, typename std::enable_if<
+struct StackPusher<T, typename std::enable_if<
 	!std::is_void<typename T::value_type>::value &&
 	!std::is_void<decltype(std::declval<T&>().begin())>::value &&
 	!std::is_void<decltype(std::declval<T&>().end())>::value
@@ -52,13 +45,18 @@ struct Stack<T, typename std::enable_if<
 		for(auto & item: val)
 		{
 			lua_pushinteger(state, i++);
-			Stack<typename T::value_type>::push(state, item);
+			Stack::push(state, item);
 			lua_settable(state, -3);
 		}
 	}
+};
 
-	template<class E=
-		decltype(std::inserter(std::declval<T&>(), std::declval<T&>().end()))>
+template<class T>
+struct StackGetter<T, typename std::enable_if<
+	!std::is_void<typename T::value_type>::value &&
+	!std::is_void<decltype(std::inserter(std::declval<T&>(), std::declval<T&>().end()))>::value
+	>::type>
+{
 	static T get(lua_State * state, int idx)
 	{
 		const int aidx = lua_absindex(state, idx);
@@ -70,7 +68,7 @@ struct Stack<T, typename std::enable_if<
 		lua_gettable(state, aidx);
 		for(int i=2; !lua_isnil(state, -1); ++i)
 		{
-			it = Stack<typename T::value_type>::get(state, -1);
+			it = Stack::get<typename T::value_type>(state, -1);
 			lua_settop(state, aidx);
 			lua_pushinteger(state, i);
 			lua_gettable(state, aidx);
@@ -97,16 +95,13 @@ struct Stack<T, typename std::enable_if<
 		for(int i=1; !lua_isnil(state, -1); ++i){
 			lua_settop(state, top);
 			lua_pushinteger(state, i);
-			if(!Stack<typename T::value_type>::is(state, -1))
+			if(!Stack::is<typename T::value_type>(state, -1))
 				return false;
 		}
 
 		return true;
 	}
 
-	template<class E=typename std::enable_if<
-			!std::is_void<decltype(std::inserter(std::declval<T&>(), std::declval<T&>().end()))>::value
-	>::type>
 	static std::tuple<T, Error> safeGet(lua_State * state, int idx)
 	{
 		const int top = lua_gettop(state);
@@ -134,7 +129,7 @@ struct Stack<T, typename std::enable_if<
 			lua_pushinteger(state, i);
 			lua_gettable(state, idx);
 
-			std::tie(it, e) = Stack<typename T::value_type>::safeGet(state, it, -1);
+			std::tie(it, e) = Stack::safeGet<typename T::value_type>(state, it, -1);
 			if(!e)
 			{
 				e.desc = boost::format("iterable[%1%]: %2%") % (i - 1) % e.desc;

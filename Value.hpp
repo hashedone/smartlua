@@ -39,7 +39,7 @@ public:
 	{
 		AtScopeExit(lua_pop(ref.getState(), 1));
 		ref.push(ref.getState());
-		return impl::Stack<T>::get(ref.getState(), -1);
+		return impl::Stack::get<T>(ref.getState(), -1);
 	}
 
 	template<class T>
@@ -47,7 +47,7 @@ public:
 	{
 		AtScopeExit(lua_pop(ref.getState(), 1));
 		ref.push(ref.getState());
-		return impl::Stack<T>::is(ref.getState(), -1);
+		return impl::Stack::is<T>(ref.getState(), -1);
 	}
 
 	template<class T>
@@ -55,7 +55,7 @@ public:
 	{
 		AtScopeExit(lua_pop(ref.getState(), 1));
 		ref.push(ref.getState());
-		return impl::Stack<T>::safeGet(ref.getState(), -1);
+		return impl::Stack::safeGet<T>(ref.getState(), -1);
 	}
 
 private:

@@ -31,13 +31,17 @@ namespace smartlua { namespace impl
 {
 
 template<>
-struct Stack<smartlua::Function>
+struct StackPusher<smartlua::Function>
 {
 	static void push(lua_State * state, const smartlua::Function & val)
 	{
 		val.push(state);
 	}
+};
 
+template<>
+struct StackGetter<smartlua::Function>
+{
 	static smartlua::Function get(lua_State * state, int idx)
 	{
 		return smartlua::Function(Reference::createFromStack(state, idx));
@@ -77,6 +81,33 @@ struct Stack<smartlua::Function>
 		return std::make_tuple(smartlua::Function(std::move(Reference::createFromStack(state, idx))), Error::noError());
 	}
 };
+
+template<class... Args>
+struct StackGetter<std::function<void(Args...)>>
+{
+	static std::function<void(Args...)> get(lua_State * state, int idx)
+	{
+		auto f = Stack::get<smartlua::Function>(state, idx);
+		return [f](Args... args) { f.call(args...); };
+	}
+
+	static bool is(lua_State * state, int idx)
+	{
+		return Stack::is<smartlua::Function>(state, idx);
+	}
+
+	static std::tuple<std::function<void(Args...)>, Error> safeGet(lua_State * state, int idx)
+	{
+		auto result = Stack::safeGet<smartlua::Function>(state, idx);
+		if(!std::get<Error>(result))
+		{
+			return std::make_tuple([](Args...){ }, std::get<Error>(result));
+		}
+		auto f = std::get<smartlua::Function>(result);
+		return [f](Args... args) { return f.call(args...); };
+	}
+};
+
 
 } }
 

@@ -87,7 +87,7 @@ private:
 	template<class Head, class... Tail>
 	void pushArgs(lua_State * thread, Head head, Tail... tail) const
 	{
-		Stack<Head>::push(thread, head);
+		Stack::push(thread, head);
 		pushArgs(thread, tail...);
 	}
 
@@ -102,7 +102,7 @@ struct FunctionTraits
 
 	static std::tuple<R, Error> extractResult(lua_State * state)
 	{
-		return Stack<R>::safeGet(state, -1);
+		return Stack::safeGet<R>(state, -1);
 	}
 };
 
@@ -121,7 +121,7 @@ struct FunctionTraits<MultiplyReturn<R>>
 		Error e = Error::noError();
 		auto it = std::inserter(result, result.end());
 		for(int i = 1; i <= size && e; ++i)
-			std::tie(it, e) = Stack<R>::safeGet(state, i);
+			std::tie(it, e) = Stack::safeGet<R>(state, i);
 
 		return std::make_tuple(result, e);
 	}
@@ -133,7 +133,7 @@ struct ExtractResults
 	static Error get(lua_State * state, Tuple & result)
 	{
 		Error e;
-		std::tie(std::get<N-1>(result), e) = Stack<typename std::tuple_element<N-1, Tuple>::type>::safeGet(state, N);
+		std::tie(std::get<N-1>(result), e) = Stack::safeGet<typename std::tuple_element<N-1, Tuple>::type>(state, N);
 		if(!e) return e;
 
 		return ExtractResults<N-1, Tuple>::get(state, result);

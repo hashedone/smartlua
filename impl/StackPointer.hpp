@@ -29,13 +29,17 @@ namespace smartlua { namespace impl
 {
 
 template<class T>
-struct Stack<T*>
+struct StackPusher<T*, typename std::enable_if<!std::is_same<T, char>::value>::type>
 {
 	static void push(lua_State * state, T * val)
 	{
 		lua_pushlightuserdata(state, static_cast<void*>(val));
 	}
+};
 
+template<class T>
+struct StackGetter<T*, typename std::enable_if<!std::is_same<T, char>::value>::type>
+{
 	static T * get(lua_State * state, int idx)
 	{
 		return static_cast<T*>(lua_touserdata(state, idx));

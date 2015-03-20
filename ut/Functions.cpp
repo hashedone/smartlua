@@ -69,3 +69,12 @@ TEST(FunctionShould, MultiplyReturnToTuple)
 	ASSERT_EQ(Error::noError().desc, e.desc);
 	ASSERT_EQ((std::make_tuple(4, std::string("test"))), r);
 }
+
+TEST(FunctionShould, ExtractToNoReturningStdFunction)
+{
+	Lua lua;
+	lua.script("function foo(a, b) g = a + b end");
+	auto foo = lua.global<std::function<void(int, int)>>("foo");
+	foo(4, 5);
+	ASSERT_EQ(9, lua.global<int>("g"));
+}

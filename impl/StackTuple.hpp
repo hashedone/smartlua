@@ -38,7 +38,7 @@ struct StackTupleHelper
 	static void push(lua_State * state, const Tuple & t)
 	{
 		lua_pushinteger(state, N);
-		Stack<typename std::tuple_element<N-1, Tuple>::type>::push(state, std::get<N-1>(t));
+		Stack::push(state, std::get<N-1>(t));
 		lua_settable(state, -3);
 
 		StackTupleHelper<N-1, Tuple>::push(state, t);
@@ -48,7 +48,7 @@ struct StackTupleHelper
 	{
 		lua_pushinteger(state, N);
 		lua_gettable(state, idx);
-		std::get<N-1>(t) = Stack<typename std::tuple_element<N-1, Tuple>::type>::get(state, -1);
+		std::get<N-1>(t) = Stack::get<typename std::tuple_element<N-1, Tuple>::type>(state, -1);
 		lua_pop(state, 1);
 
 		StackTupleHelper<N-1, Tuple>::get(state, t, idx);
@@ -58,7 +58,7 @@ struct StackTupleHelper
 	{
 		lua_pushinteger(state, N);
 		lua_gettable(state, idx);
-		if(!Stack<typename std::tuple_element<N-1, Tuple>::type>::is(state, -1))
+		if(!Stack::is<typename std::tuple_element<N-1, Tuple>::type>(state, -1))
 		{
 			lua_pop(state, 1);
 			return false;
@@ -73,7 +73,7 @@ struct StackTupleHelper
 		lua_pushinteger(state, N);
 		lua_gettable(state, idx);
 		Error e;
-		std::tie(std::get<N-1>(t), e) = Stack<typename std::tuple_element<N-1, Tuple>::type>::safe_get(state, idx);
+		std::tie(std::get<N-1>(t), e) = Stack::safeGet<typename std::tuple_element<N-1, Tuple>::type>(state, idx);
 		if(!e)
 		{
 			e.desc = boost::format("tuple[%1%]: %2%") % N % e.desc;
@@ -96,7 +96,7 @@ struct StackTupleHelper<0, Tuple>
 };
 
 template<class... Args>
-struct Stack<std::tuple<Args...>>
+struct StackPusher<std::tuple<Args...>>
 {
 	static void push(lua_State * state, const std::tuple<Args...> & t)
 	{
@@ -105,7 +105,11 @@ struct Stack<std::tuple<Args...>>
 			sizeof...(Args) - StackTupleHelper<sizeof...(Args), std::tuple<Args...>>::tableTypes);
 		StackTupleHelper<sizeof...(Args), std::tuple<Args...>>::push(state, t);
 	}
+};
 
+template<class... Args>
+struct StackGetter<std::tuple<Args...>>
+{
 	template<class U=std::tuple<Args...>>
 	static U get(lua_State * state, int idx)
 	{
@@ -142,7 +146,7 @@ struct Stack<std::tuple<Args...>>
 };
 
 template<class T, int N>
-struct Stack<std::array<T, N>>
+struct StackPusher<std::array<T, N>>
 {
 	static void push(lua_State * state, const std::array<T, N> & t)
 	{
@@ -151,7 +155,11 @@ struct Stack<std::array<T, N>>
 			N - StackTupleHelper<N, std::array<T, N>>::tableTypes);
 		StackTupleHelper<N, std::array<T, N>>::push(state, t);
 	}
+};
 
+template<class T, int N>
+struct StackGetter<std::array<T, N>>
+{
 	template<class U=std::array<T, N>>
 	static U get(lua_State * state, int idx)
 	{

@@ -66,7 +66,7 @@ TEST(VariablesTest, SafelyGetting)
 	EXPECT_EQ(5, i);
 }
 
-TEST(VariablesTest, SettinStandardTypes)
+TEST(VariablesTest, SettingStandardTypes)
 {
 	Lua sut;
 

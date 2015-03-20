@@ -29,13 +29,17 @@ namespace smartlua { namespace impl
 {
 
 template<>
-struct Stack<bool>
+struct StackPusher<bool>
 {
 	static void push(lua_State * state, bool val)
 	{
 		lua_pushboolean(state, val);
 	}
+};
 
+template<>
+struct StackGetter<bool>
+{
 	static bool get(lua_State * state, int idx)
 	{
 		return lua_toboolean(state, idx);

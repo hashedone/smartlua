@@ -29,13 +29,17 @@ namespace smartlua { namespace impl
 {
 
 template<class T>
-struct Stack<T, typename std::enable_if<std::is_integral<T>::value>::type>
+struct StackPusher<T, typename std::enable_if<std::is_integral<T>::value>::type>
 {
 	static void push(lua_State * state, T val)
 	{
 		lua_pushinteger(state, val);
 	}
+};
 
+template<class T>
+struct StackGetter<T, typename std::enable_if<std::is_integral<T>::value>::type>
+{
 	static T get(lua_State * state, int idx)
 	{
 		return lua_tointeger(state, idx);

@@ -30,13 +30,17 @@ namespace smartlua { namespace impl
 {
 
 template<>
-struct Stack<Value>
+struct StackPusher<Value>
 {
 	static void push(lua_State * state, const Value & val)
 	{
 		val.push(state);
 	}
+};
 
+template<>
+struct StackGetter<Value>
+{
 	static Value get(lua_State * state, int idx)
 	{
 		return Value(Reference::createFromStack(state, idx));

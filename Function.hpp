@@ -37,7 +37,7 @@ public:
 	operator bool() const { return fnc; }
 
 	template<class... Args>
-	Error call(Args... args)
+	Error call(Args... args) const
 	{
 		impl::CallStack callStack(fnc.getReference().getState());
 		lua_State * parentThread = callStack.getCurrentState();
@@ -51,7 +51,7 @@ public:
 	}
 
 	template<class R, class... Args>
-	std::tuple<typename impl::FunctionTraits<R>::ReturnType, Error> call(Args... args)
+	std::tuple<typename impl::FunctionTraits<R>::ReturnType, Error> call(Args... args) const
 	{
 		impl::CallStack callStack(fnc.getReference().getState());
 		lua_State * parentThread = callStack.getCurrentState();
@@ -71,13 +71,13 @@ public:
 	}
 
 	template<class... Args>
-	void operator()(Args... args)
+	void operator()(Args... args) const
 	{
 		call(args...);
 	}
 
 	template<class R, class...Args>
-	typename impl::FunctionTraits<R>::ReturnType operator()(R r, Args... args)
+	typename impl::FunctionTraits<R>::ReturnType operator()(R r, Args... args) const
 	{
 		return call(r, args...);
 	}

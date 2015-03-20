@@ -28,7 +28,6 @@
 #include "impl/StackIterable.hpp"
 #include "impl/StackPointer.hpp"
 #include "impl/StackString.hpp"
-#include "impl/StackTrivial.hpp"
 #include "impl/StackTuple.hpp"
 #include "impl/StackValue.hpp"
 
@@ -215,7 +214,7 @@ public:
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name.c_str());
-		return impl::Stack<T>::get(state.get, -1);
+		return impl::Stack::get<T>(state.get, -1);
 	}
 
 	template<class T>
@@ -223,7 +222,7 @@ public:
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name);
-		return impl::Stack<T>::get(state.get(), -1);
+		return impl::Stack::get<T>(state.get(), -1);
 	}
 
 	template<class T>
@@ -231,7 +230,7 @@ public:
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name.c_str());
-		return impl::Stack<T>::is(state.get(), -1);
+		return impl::Stack::is<T>(state.get(), -1);
 	}
 
 	template<class T>
@@ -239,7 +238,7 @@ public:
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name);
-		return impl::Stack<T>::is(state.get(), -1);
+		return impl::Stack::is<T>(state.get(), -1);
 	}
 
 	template<class T>
@@ -247,7 +246,7 @@ public:
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name.c_str());
-		return impl::Stack<T>::safeGet(state.get(), -1);
+		return impl::Stack::safeGet<T>(state.get(), -1);
 	}
 
 	template<class T>
@@ -255,20 +254,20 @@ public:
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name);
-		return impl::Stack<T>::safeGet(state.get(), -1);
+		return impl::Stack::safeGet<T>(state.get(), -1);
 	}
 
 	template<class T>
 	void global(std::string const & name, const T & val)
 	{
-		impl::Stack<T>::push(state.get(), val);
+		impl::Stack::push(state.get(), val);
 		lua_setglobal(state.get(), name.c_str());
 	}
 
 	template<class T>
 	void global(char const * name, const T & val)
 	{
-		impl::Stack<T>::push(state.get(), val);
+		impl::Stack::push(state.get(), val);
 		lua_setglobal(state.get(), name);
 	}
 

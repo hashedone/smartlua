@@ -30,19 +30,38 @@ namespace smartlua { namespace impl
 {
 
 template<class T, class E=void>
-struct Stack
+struct StackPusher
 {
 	static void push(lua_State * state, const T & val)
 	{
+		static const int metatableRef = prepareMetatable(state); // Same metatable would be used for all instances
+
 		T * ptr = static_cast<T *>(lua_newuserdata(state, sizeof(T)));
 		new(ptr) T(val);
-		lua_createtable(state, 0, 1);
-		lua_pushstring(state, "__gc");
-		lua_pushcclosure(state, &Stack<T>::gc, 0);
-		lua_settable(state, -3);
+		lua_rawgeti(state, LUA_REGISTRYINDEX, metatableRef);
 		lua_setmetatable(state, -2);
 	}
+private:
+	static int prepareMetatable(lua_State * state)
+	{
+		lua_createtable(state, 0, 1);
+		lua_pushstring(state, "__gc");
+		lua_pushcclosure(state, &StackPusher<T>::gc, 0);
+		lua_rawset(state, -3);
+		return luaL_ref(state, LUA_REGISTRYINDEX);
+	}
 
+	static int gc(lua_State * state)
+	{
+		T * ptr = static_cast<T*>(lua_touserdata(state, -1));
+		ptr->~T();
+		return 0;
+	}
+};
+
+template<class T, class E=void>
+struct StackGetter
+{
 	static T get(lua_State * state, int idx)
 	{
 		return *static_cast<T *>(lua_touserdata(state, idx));
@@ -64,13 +83,32 @@ struct Stack
 			*static_cast<T*>(lua_touserdata(state, idx)),
 			Error::noError());
 	}
+};
 
-private:
-	static int gc(lua_State * state)
+struct Stack
+{
+	template<class T>
+	static void push(lua_State * state, const T & val)
 	{
-		T * ptr = lua_touserdata(state, -1);
-		delete ptr;
-		return 0;
+		StackPusher<T>::push(state, val);
+	}
+
+	template<class T>
+	static T get(lua_State * state, int idx)
+	{
+		return StackGetter<T>::get(state, idx);
+	}
+
+	template<class T>
+	static bool is(lua_State * state, int idx)
+	{
+		return StackGetter<T>::is(state, idx);
+	}
+
+	template<class T>
+	static std::tuple<T, Error> safeGet(lua_State * state, int idx)
+	{
+		return StackGetter<T>::safeGet(state, idx);
 	}
 };
 
