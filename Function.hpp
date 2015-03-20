@@ -70,6 +70,18 @@ public:
 		return impl::FunctionTraits<R>::extractResult(thread);
 	}
 
+	template<class... Args>
+	void operator()(Args... args)
+	{
+		call(args...);
+	}
+
+	template<class R, class...Args>
+	typename impl::FunctionTraits<R>::ReturnType operator()(R r, Args... args)
+	{
+		return call(r, args...);
+	}
+
 private:
 
 	impl::Function fnc;

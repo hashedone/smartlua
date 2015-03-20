@@ -25,6 +25,7 @@
 #endif
 
 #include <string>
+#include <functional>
 
 namespace smartlua { namespace impl
 {
