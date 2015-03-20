@@ -25,48 +25,32 @@ struct Error
 {
 	enum class Code
 	{
-		OK,
-		BAD_REFERENCE_TYPE,
-		EMPTY_REFERENCE_USAGE,
-		RUNTIME_ERROR,
+		Ok,
+		BadReferenceType,
+		EmptyReferenceUsage,
+		RuntimeError,
 		BadType
 	} code;
 
 	std::string desc;
 
-	operator bool() const { return code == Code::OK; }
+	operator bool() const { return code == Code::Ok; }
 
-	static Error noError() { return Error { Code::OK, "" }; }
+	static Error noError() { return Error { Code::Ok, "" }; }
 
 	static Error badReference(const std::string & expected, const std::string & found)
 	{
-		return Error { Code::BAD_REFERENCE_TYPE, "bad reference type: expected " + expected + ", " + found + " found" };
-	}
-	static Error badReference(const std::string & prefix, const std::string & expected, const std::string & found)
-	{
-		return Error { Code::BAD_REFERENCE_TYPE, prefix + ": bad reference type: expected " + expected + ", " + found + " found" };
+		return Error { Code::BadReferenceType, "bad reference type: expected " + expected + ", " + found + " found" };
 	}
 
-	static Error emptyReferenceUsage()
-	{
-		return Error { Code::EMPTY_REFERENCE_USAGE, "empty reference usage" };
-	}
 	static Error emptyReferenceUsage(const std::string & purpose)
 	{
-		return Error { Code::EMPTY_REFERENCE_USAGE, "empty reference usage (" + purpose + ")" };
-	}
-	static Error emptyReferenceUsage(const std::string & prefix, const std::string & purpose)
-	{
-		return Error { Code::EMPTY_REFERENCE_USAGE, prefix + ": empty reference usage (" + purpose + ")" };
+		return Error { Code::EmptyReferenceUsage, "empty reference usage (" + purpose + ")" };
 	}
 
 	static Error runtimeError(const std::string & error)
 	{
-		return Error { Code::RUNTIME_ERROR, "runtime error (" + error + ")" };
-	}
-	static Error runtimeError(const std::string & prefix, const std::string & error)
-	{
-		return Error { Code::RUNTIME_ERROR, prefix + ": runtime error (" + error + ")" };
+		return Error { Code::RuntimeError, "runtime error: " + error };
 	}
 
 	static Error badType(std::string const & expected, std::string const & found)

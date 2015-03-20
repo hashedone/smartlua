@@ -16,6 +16,7 @@
 
 #include "Stack.hpp"
 #include "../utils/Traits.hpp"
+#include "../utils/AtScopeExit.hpp"
 #include "../Error.hpp"
 
 #ifndef SMARTLUA_USER_LUA_INCLUDE

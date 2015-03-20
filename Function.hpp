@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "Stack.hpp"
 #include "Error.hpp"
 #include "impl/Function.hpp"
 #include "impl/CallStack.hpp"
@@ -29,8 +28,8 @@ namespace smartlua
 class Function
 {
 public:
-	Function(impl::Reference && ref, const std::string & name = "__UNKNOWN_FUNCTION__"):
-		fnc(std::move(ref), name)
+	Function(impl::Reference && ref):
+		fnc(std::move(ref))
 	{ }
 
 	void push(lua_State * state) const { fnc.getReference().push(state); }
@@ -40,7 +39,6 @@ public:
 	template<class... Args>
 	Error call(Args... args)
 	{
-		// Creating new stack frame
 		impl::CallStack callStack(fnc.getReference().getState());
 		lua_State * parentThread = callStack.getCurrentState();
 		lua_State * thread = lua_newthread(parentThread);
@@ -52,60 +50,29 @@ public:
 		return fnc(thread, 0, args...);
 	}
 
-	/*template<class R, class... Args>
-	R operator()(Args... args)
+	template<class R, class... Args>
+	std::tuple<typename impl::FunctionTraits<R>::ReturnType, Error> call(Args... args)
 	{
-		lua_State * state;
-		std::tie(state, lastError) = fnc(1, args...);
-		Stack stack(state);
-		if(!lastError)
+		impl::CallStack callStack(fnc.getReference().getState());
+		lua_State * parentThread = callStack.getCurrentState();
+		lua_State * thread = lua_newthread(parentThread);
+		callStack.setCurrentState(thread);
+		AtScopeExit(
+			callStack.setCurrentState(parentThread),
+			lua_pop(parentThread, 1));
+
+		auto e = fnc(thread, impl::FunctionTraits<R>::returnsCount, args...);
+		if(!e)
 		{
-			stack.size(0);
-			return R();
+			return std::make_tuple(typename impl::FunctionTraits<R>::ReturnType(), e);
 		}
 
-		R result;
-		lastError = stack.safeGet(result);
-		if(!lastError)
-			lastError = Error::stackError(
-				"function " + fnc.getName(),
-				"extracting result",
-				lastError.desc);
-		else
-			lastError = Error::noError();
-
-		stack.size(0);
-		return result;
-	}*/
+		return impl::FunctionTraits<R>::extractResult(thread);
+	}
 
 private:
 
 	impl::Function fnc;
 };
-
-/*template<>
-class Function<void>
-{
-public:
-	Function(impl::Reference && ref, const std::string & name = "__UNKNOWN_FUNCTION__"):
-		lastError(Error::noError()),
-		fnc(std::move(ref), name, lastError)
-	{ }
-
-	Error error() const { return lastError; }
-	operator bool() const { return fnc; }
-
-	template<class... Args>
-	void operator()(Args... args)
-	{
-		lua_State * state;
-		std::tie(state, lastError) = fnc(0, args...);
-		Stack(state).size(0);
-	}
-
-private:
-	Error lastError;
-	impl::Function fnc;
-};*/
 
 }

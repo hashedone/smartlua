@@ -17,9 +17,20 @@
 #pragma once
 
 #include "Error.hpp"
-#include "Stack.hpp"
-#include "impl/CallStack.hpp"
 #include "utils/AtScopeExit.hpp"
+
+#include "impl/CallStack.hpp"
+#include "impl/Stack.hpp"
+#include "impl/StackBoolean.hpp"
+#include "impl/StackFloatingPoint.hpp"
+#include "impl/StackFunction.hpp"
+#include "impl/StackIntegral.hpp"
+#include "impl/StackIterable.hpp"
+#include "impl/StackPointer.hpp"
+#include "impl/StackString.hpp"
+#include "impl/StackTrivial.hpp"
+#include "impl/StackTuple.hpp"
+#include "impl/StackValue.hpp"
 
 #ifndef SMARTLUA_USER_LUA_INCLUDE
 #include <lua.hpp>
@@ -204,7 +215,7 @@ public:
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name.c_str());
-		return Stack(state.get()).get<T>();
+		return impl::Stack<T>::get(state.get, -1);
 	}
 
 	template<class T>
@@ -212,23 +223,23 @@ public:
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name);
-		return Stack(state.get()).get<T>();
+		return impl::Stack<T>::get(state.get(), -1);
 	}
 
 	template<class T>
-	T isGlobalTypeOf(std::string const & name) const
+	bool isGlobalTypeOf(std::string const & name) const
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name.c_str());
-		Stack(state.get()).is<T>();
+		return impl::Stack<T>::is(state.get(), -1);
 	}
 
 	template<class T>
-	T isGlobalTypeOf(char const * name) const
+	bool isGlobalTypeOf(char const * name) const
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name);
-		Stack(state.get()).is<T>();
+		return impl::Stack<T>::is(state.get(), -1);
 	}
 
 	template<class T>
@@ -236,7 +247,7 @@ public:
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name.c_str());
-		return Stack(state.get()).safeGet<T>();
+		return impl::Stack<T>::safeGet(state.get(), -1);
 	}
 
 	template<class T>
@@ -244,20 +255,20 @@ public:
 	{
 		AtScopeExit(lua_settop(state.get(), 0));
 		lua_getglobal(state.get(), name);
-		return Stack(state.get()).safeGet<T>();
+		return impl::Stack<T>::safeGet(state.get(), -1);
 	}
 
 	template<class T>
 	void global(std::string const & name, const T & val)
 	{
-		Stack(state.get()).push(val);
+		impl::Stack<T>::push(state.get(), val);
 		lua_setglobal(state.get(), name.c_str());
 	}
 
 	template<class T>
 	void global(char const * name, const T & val)
 	{
-		Stack(state.get()).push(val);
+		impl::Stack<T>::push(state.get(), val);
 		lua_setglobal(state.get(), name);
 	}
 

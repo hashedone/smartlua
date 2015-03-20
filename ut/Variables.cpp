@@ -62,7 +62,7 @@ TEST(VariablesTest, SafelyGetting)
 	int i;
 	Error e;
 	std::tie(i, e) = sut.safeGetGlobal("x", i);
-	EXPECT_EQ(Error::Code::OK, e.code);
+	EXPECT_EQ(Error::Code::Ok, e.code);
 	EXPECT_EQ(5, i);
 }
 

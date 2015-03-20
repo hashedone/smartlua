@@ -36,6 +36,7 @@ struct Stack<T,
 		std::is_trivially_destructible<T>::value &&
 		!std::is_fundamental<T>::value &&
 		!std::is_pointer<T>::value &&
+		!std::is_array<T>::value &&
 		!utils::is_luatable_type<T>::value>::type>
 {
 	static void push(lua_State * state, const T & val)

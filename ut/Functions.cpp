@@ -27,6 +27,45 @@ TEST(FunctionShould, Call)
 	lua.script("function foo(a, b) g = a + b end");
 	auto foo = lua.global<Function>("foo");
 	ASSERT_TRUE(foo);
-	ASSERT_EQ(Error::noError().code, foo.call(4, 5).code);
+	ASSERT_EQ(Error::noError().desc, foo.call(4, 5).desc);
 	ASSERT_EQ(9, lua.global<int>("g"));
+}
+
+TEST(FunctionShould, ReturnValue)
+{
+	Lua lua;
+	lua.script("function foo(a, b) return a + b end");
+	auto foo = lua.global<Function>("foo");
+	ASSERT_TRUE(foo);
+	int r;
+	Error e;
+	std::tie(r, e) = foo.call<int>(4, 5);
+	ASSERT_EQ(Error::noError().desc, e.desc);
+	ASSERT_EQ(9, r);
+}
+
+TEST(FunctionShould, MultiplyReturnToVector)
+{
+	Lua lua;
+	lua.script("function foo(a, b) return a, b end");
+	auto foo = lua.global<Function>("foo");
+	ASSERT_TRUE(foo);
+	std::vector<int> r;
+	Error e;
+	std::tie(r, e) = foo.call<MultiplyReturn<int>>(4, 5);
+	ASSERT_EQ(Error::noError().desc, e.desc);
+	ASSERT_EQ((std::vector<int> { 4, 5 }), r);
+}
+
+TEST(FunctionShould, MultiplyReturnToTuple)
+{
+	Lua lua;
+	lua.script("function foo(a, b) return a, b end");
+	auto foo = lua.global<Function>("foo");
+	ASSERT_TRUE(foo);
+	std::tuple<int, std::string> r;
+	Error e;
+	std::tie(r, e) = foo.call<MultiplyReturn<int, std::string>>(4, "test");
+	ASSERT_EQ(Error::noError().desc, e.desc);
+	ASSERT_EQ((std::make_tuple(4, std::string("test"))), r);
 }

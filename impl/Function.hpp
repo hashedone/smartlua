@@ -16,23 +16,28 @@
 
 #pragma once
 
-#include "StackReference.hpp"
 #include "../Error.hpp"
 #include "../utils/AtScopeExit.hpp"
 #include "Reference.hpp"
 
 #include <string>
+#include <vector>
 #include <tuple>
 
-namespace smartlua { namespace impl
+namespace smartlua
+{
+
+template<class... Returns>
+struct MultiplyReturn { };
+
+namespace impl
 {
 
 class Function
 {
 public:
-	Function(Reference && ref_, const std::string & name_):
-		ref(ref_),
-		name(name_)
+	Function(Reference && ref_):
+		ref(ref_)
 	{
 		auto state = ref_.getState();
 		const int top = lua_gettop(state);
@@ -53,7 +58,6 @@ public:
 	}
 
 	operator bool() const { return ref; }
-	std::string getName() const { return name; }
 	Reference & getReference() { return ref; }
 	Reference const & getReference() const { return ref; }
 
@@ -62,21 +66,16 @@ public:
 	{
 		if(!ref)
 		{
-			return Error::emptyReferenceUsage(
-					"function " + name,
-					"function call");
+			return Error::emptyReferenceUsage("function call");
 		}
 
 		ref.push(thread);
 
 		pushArgs(thread, args...);
-		int p = lua_pcall(thread, sizeof...(Args), retc, 0);
-		if(p)
+		if(lua_pcall(thread, sizeof...(Args), retc, 0))
 		{
 			AtScopeExit(lua_settop(thread, 0));
-			return Error::runtimeError(
-					"function " + name,
-					lua_tostring(thread, -1));
+			return Error::runtimeError(lua_tostring(thread, -1));
 		}
 
 		return Error::noError();
@@ -93,7 +92,73 @@ private:
 	}
 
 	Reference ref;
-	std::string name;
+};
+
+template<class R, class E = void>
+struct FunctionTraits
+{
+	using ReturnType = R;
+	static constexpr int returnsCount = 1;
+
+	static std::tuple<R, Error> extractResult(lua_State * state)
+	{
+		return Stack<R>::safeGet(state, -1);
+	}
+};
+
+template<class R>
+struct FunctionTraits<MultiplyReturn<R>>
+{
+	using ReturnType = std::vector<R>;
+	static constexpr int returnsCount = LUA_MULTRET;
+
+	static std::tuple<std::vector<R>, Error> extractResult(lua_State * state)
+	{
+		std::vector<R> result;
+		int size = lua_gettop(state);
+		result.reserve(size);
+
+		Error e = Error::noError();
+		auto it = std::inserter(result, result.end());
+		for(int i = 1; i <= size && e; ++i)
+			std::tie(it, e) = Stack<R>::safeGet(state, i);
+
+		return std::make_tuple(result, e);
+	}
+};
+
+template<int N, class Tuple>
+struct ExtractResults
+{
+	static Error get(lua_State * state, Tuple & result)
+	{
+		Error e;
+		std::tie(std::get<N-1>(result), e) = Stack<typename std::tuple_element<N-1, Tuple>::type>::safeGet(state, N);
+		if(!e) return e;
+
+		return ExtractResults<N-1, Tuple>::get(state, result);
+	}
+};
+
+template<class Tuple>
+struct ExtractResults<0, Tuple>
+{
+	static Error get(lua_State *, Tuple &) { return Error::noError(); }
+};
+
+template<class... Results>
+struct FunctionTraits<MultiplyReturn<Results...>, typename std::enable_if<(sizeof...(Results) > 1)>::type>
+{
+	using ReturnType = std::tuple<Results...>;
+	static constexpr int returnsCount = sizeof...(Results);
+
+	static std::tuple<std::tuple<Results...>, Error> extractResult(lua_State * state)
+	{
+		std::tuple<Results...> result;
+		auto e = ExtractResults<sizeof...(Results), std::tuple<Results...>>::get(state, result);
+
+		return std::make_tuple(result, e);
+	}
 };
 
 } }

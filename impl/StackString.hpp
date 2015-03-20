@@ -92,5 +92,67 @@ struct Stack<const char *>
 	}
 };
 
+template<>
+struct Stack<char *>
+{
+	static void push(lua_State * state, const char * str)
+	{
+		lua_pushstring(state, str);
+	}
+
+	static const char * get(lua_State * state, int idx)
+	{
+		return lua_tostring(state, idx);
+	}
+
+	static bool is(lua_State * state, int idx)
+	{
+		return lua_isstring(state, idx) && !lua_isnumber(state, idx);
+	}
+
+	static std::tuple<const char *, Error> safeGet(lua_State * state, int idx)
+	{
+		if(!lua_isstring(state, idx) || lua_isnumber(state, idx))
+			return std::make_tuple(
+				"",
+				Error::badType("cstring", lua_typename(state, lua_type(state, idx))));
+
+		return std::make_tuple(
+			lua_tostring(state, idx),
+			Error::noError());
+	}
+};
+
+template<size_t N>
+struct Stack<char[N]>
+{
+	static void push(lua_State * state, const char * str)
+	{
+		lua_pushstring(state, str);
+	}
+
+	static const char * get(lua_State * state, int idx)
+	{
+		return lua_tostring(state, idx);
+	}
+
+	static bool is(lua_State * state, int idx)
+	{
+		return lua_isstring(state, idx) && !lua_isnumber(state, idx);
+	}
+
+	static std::tuple<const char *, Error> safeGet(lua_State * state, int idx)
+	{
+		if(!lua_isstring(state, idx) || lua_isnumber(state, idx))
+			return std::make_tuple(
+				"",
+				Error::badType("cstring", lua_typename(state, lua_type(state, idx))));
+
+		return std::make_tuple(
+			lua_tostring(state, idx),
+			Error::noError());
+	}
+};
+
 } }
 
